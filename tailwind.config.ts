@@ -49,6 +49,32 @@ export default {
           foreground: "#FFFFFF",
         },
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: 'hsl(var(--foreground))',
+            maxWidth: 'none',
+            h1: {
+              color: '#9b87f5',
+            },
+            h2: {
+              color: '#9b87f5',
+            },
+            h3: {
+              color: '#9b87f5',
+            },
+            strong: {
+              color: '#9b87f5',
+            },
+            a: {
+              color: '#9b87f5',
+              '&:hover': {
+                color: '#7E69AB',
+              },
+            },
+          },
+        },
+      },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
       },
@@ -59,5 +85,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;

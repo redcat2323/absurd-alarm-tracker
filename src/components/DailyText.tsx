@@ -25,11 +25,15 @@ export const DailyText = () => {
   }, []);
 
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Boot Diário</h2>
+    <Card className="p-6 bg-gradient-to-br from-card to-secondary/5">
+      <h2 className="text-2xl font-bold mb-6 text-primary">Boot Diário</h2>
       {text ? (
         <div 
-          className="prose dark:prose-invert max-w-none text-muted-foreground"
+          className="prose prose-lg dark:prose-invert max-w-none text-foreground leading-relaxed"
+          style={{
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}
           dangerouslySetInnerHTML={{ __html: text }}
         />
       ) : (
