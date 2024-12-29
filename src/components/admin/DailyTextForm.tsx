@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,33 @@ const DailyTextForm = () => {
     new Date().toISOString().split("T")[0]
   );
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchExistingText = async () => {
+      const { data, error } = await supabase
+        .from("daily_texts")
+        .select("text")
+        .eq("date", selectedDate)
+        .maybeSingle();
+
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao buscar texto existente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data) {
+        setDailyText(data.text);
+      } else {
+        setDailyText("");
+      }
+    };
+
+    fetchExistingText();
+  }, [selectedDate, toast]);
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +59,6 @@ const DailyTextForm = () => {
         title: "Sucesso",
         description: "Texto diário atualizado com sucesso!",
       });
-      setDailyText("");
     }
   };
 
