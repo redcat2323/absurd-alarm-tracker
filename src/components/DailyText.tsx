@@ -23,7 +23,7 @@ export const DailyText = () => {
 
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Mensagem do Dia</h2>
+      <h2 className="text-xl font-semibold mb-4">Boot Diário</h2>
       <p className="text-muted-foreground">{text || "Nenhuma mensagem para hoje."}</p>
     </Card>
   );
