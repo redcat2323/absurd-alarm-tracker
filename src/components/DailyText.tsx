@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@supabase/supabase-js";
 
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  throw new Error("Supabase URL and Anon Key are required");
+}
+
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
