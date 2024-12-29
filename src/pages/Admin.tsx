@@ -7,22 +7,46 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
+
+const ADMIN_EMAIL = "jhrizzon@gmail.com";
 
 const Admin = () => {
   const [dailyText, setDailyText] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("");
   const [bookDescription, setBookDescription] = useState("");
-  const [weekStartDate, setWeekStartDate] = useState(new Date().toISOString().split("T")[0]);
+  const [weekStartDate, setWeekStartDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      const isAuth = !!session;
+      setIsAuthenticated(isAuth);
+      
+      if (isAuth) {
+        const userEmail = session?.user?.email;
+        if (userEmail !== ADMIN_EMAIL) {
+          toast({
+            title: "Acesso Negado",
+            description: "Você não tem permissão para acessar o painel administrativo.",
+            variant: "destructive",
+          });
+          navigate("/");
+        } else {
+          setIsAuthorized(true);
+        }
+      }
     });
-  }, []);
+  }, [navigate, toast]);
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,10 +109,16 @@ const Admin = () => {
     return <Auth onLogin={handleLogin} />;
   }
 
+  if (!isAuthorized) {
+    return null; // O useEffect já cuidará do redirecionamento
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold text-center mb-8">Painel Administrativo</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">
+          Painel Administrativo
+        </h1>
 
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Texto Diário</h2>
