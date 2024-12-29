@@ -27,7 +27,14 @@ export const DailyText = () => {
   return (
     <Card className="p-6">
       <h2 className="text-xl font-semibold mb-4">Boot Diário</h2>
-      <p className="text-muted-foreground">{text || "Nenhuma mensagem para hoje."}</p>
+      {text ? (
+        <div 
+          className="prose dark:prose-invert max-w-none text-muted-foreground"
+          dangerouslySetInnerHTML={{ __html: text }}
+        />
+      ) : (
+        <p className="text-muted-foreground">Nenhuma mensagem para hoje.</p>
+      )}
     </Card>
   );
 };
