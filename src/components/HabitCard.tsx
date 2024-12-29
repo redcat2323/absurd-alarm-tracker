@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface HabitCardProps {
   title: string;
@@ -15,10 +16,9 @@ export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCa
   return (
     <Card
       className={cn(
-        "p-6 cursor-pointer transition-all hover:shadow-lg",
+        "p-6 transition-all hover:shadow-lg",
         completed ? "border-secondary" : "border-muted"
       )}
-      onClick={onClick}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -32,9 +32,16 @@ export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCa
         )}
       </div>
       <Progress value={progress} className="h-2" />
-      <p className="text-sm text-muted-foreground mt-2">
+      <p className="text-sm text-muted-foreground mt-2 mb-4">
         {progress}% completo
       </p>
+      <Button 
+        variant={completed ? "secondary" : "default"}
+        className="w-full"
+        onClick={onClick}
+      >
+        {completed ? "Desfazer" : "Marcar como realizado"}
+      </Button>
     </Card>
   );
 };
