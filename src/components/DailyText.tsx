@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
+interface DailyText {
+  id: number;
+  text: string;
+  date: string;
+}
+
 export const DailyText = () => {
   const [text, setText] = useState("");
 
@@ -9,7 +15,7 @@ export const DailyText = () => {
     const fetchDailyText = async () => {
       const { data, error } = await supabase
         .from("daily_texts")
-        .select("*")
+        .select<"daily_texts", DailyText>("*")
         .eq("date", new Date().toISOString().split("T")[0])
         .single();
 

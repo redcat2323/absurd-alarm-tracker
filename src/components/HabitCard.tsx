@@ -17,7 +17,7 @@ export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCa
     <Card
       className={cn(
         "p-6 transition-all hover:shadow-lg",
-        completed ? "border-secondary" : "border-muted"
+        completed ? "border-emerald-500" : "border-muted"
       )}
     >
       <div className="flex items-center justify-between mb-4">
@@ -26,7 +26,7 @@ export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCa
           <h3 className="font-semibold text-lg">{title}</h3>
         </div>
         {completed ? (
-          <Check className="w-6 h-6 text-secondary" />
+          <Check className="w-6 h-6 text-emerald-500" />
         ) : (
           <X className="w-6 h-6 text-destructive" />
         )}
@@ -36,8 +36,11 @@ export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCa
         {progress}% completo
       </p>
       <Button 
-        variant={completed ? "secondary" : "default"}
-        className="w-full"
+        variant={completed ? "outline" : "default"}
+        className={cn(
+          "w-full",
+          completed && "border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
+        )}
         onClick={onClick}
       >
         {completed ? "Desfazer" : "Marcar como realizado"}
