@@ -5,13 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Auth } from "@/components/Auth";
 
 const Admin = () => {
   const [dailyText, setDailyText] = useState("");
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("");
   const [bookDescription, setBookDescription] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+  }, []);
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +73,18 @@ const Admin = () => {
       setBookDescription("");
     }
   };
+
+  const handleLogin = (name: string) => {
+    setIsAuthenticated(true);
+    toast({
+      title: "Bem-vindo!",
+      description: `Login realizado com sucesso, ${name}!`,
+    });
+  };
+
+  if (!isAuthenticated) {
+    return <Auth onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
