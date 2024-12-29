@@ -105,7 +105,7 @@ const Index = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">O Pior Ano</h1>
           <p className="text-muted-foreground">
-            Bem-vindo(a), {userName}! | Dia {dayOfYear} do ano
+            Bem-vindo, {userName}! | Dia {dayOfYear} do ano
           </p>
         </div>
         
