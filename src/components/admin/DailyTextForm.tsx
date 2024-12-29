@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const DailyTextForm = () => {
   const [dailyText, setDailyText] = useState("");
@@ -52,12 +52,10 @@ const DailyTextForm = () => {
         </div>
         <div>
           <Label htmlFor="boot-text">Texto do Boot</Label>
-          <Textarea
-            id="boot-text"
+          <RichTextEditor
             value={dailyText}
-            onChange={(e) => setDailyText(e.target.value)}
+            onChange={setDailyText}
             placeholder="Digite o texto do dia..."
-            className="min-h-[100px]"
           />
         </div>
         <Button type="submit">Salvar Texto Diário</Button>

@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 const WeeklyBookForm = () => {
   const [bookTitle, setBookTitle] = useState("");
@@ -77,12 +77,10 @@ const WeeklyBookForm = () => {
         </div>
         <div>
           <Label htmlFor="book-description">Descrição do Livro</Label>
-          <Textarea
-            id="book-description"
+          <RichTextEditor
             value={bookDescription}
-            onChange={(e) => setBookDescription(e.target.value)}
+            onChange={setBookDescription}
             placeholder="Descrição do livro..."
-            className="min-h-[100px]"
           />
         </div>
         <Button type="submit">Salvar Livro da Semana</Button>
