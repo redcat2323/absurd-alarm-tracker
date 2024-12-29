@@ -103,7 +103,7 @@ const Index = () => {
     <div className="min-h-screen bg-background p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">O Pior Ano</h1>
+          <h1 className="text-4xl font-bold mb-2">O Pior Ano da Sua Vida</h1>
           <p className="text-muted-foreground">
             Bem-vindo, {userName}! | Dia {dayOfYear} do ano
           </p>
