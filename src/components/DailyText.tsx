@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-interface DailyText {
-  id: number;
-  text: string;
-  date: string;
-}
+type DailyText = Database["public"]["Tables"]["daily_texts"]["Row"];
 
 export const DailyText = () => {
   const [text, setText] = useState("");
@@ -15,9 +12,9 @@ export const DailyText = () => {
     const fetchDailyText = async () => {
       const { data, error } = await supabase
         .from("daily_texts")
-        .select<"daily_texts", DailyText>("*")
+        .select()
         .eq("date", new Date().toISOString().split("T")[0])
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         setText(data.text);
