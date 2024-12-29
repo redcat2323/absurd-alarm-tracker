@@ -30,6 +30,33 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_books: {
+        Row: {
+          author: string
+          created_at: string
+          description: string | null
+          id: number
+          title: string
+          week_start: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          title: string
+          week_start: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          title?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

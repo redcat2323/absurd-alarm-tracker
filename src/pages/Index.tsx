@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Auth } from "@/components/Auth";
 import { DailyText } from "@/components/DailyText";
+import { WeeklyBook } from "@/components/WeeklyBook";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Habit {
@@ -123,8 +124,9 @@ const Index = () => {
             ))}
           </div>
           
-          <div>
+          <div className="space-y-4">
             <DailyText />
+            <WeeklyBook />
           </div>
         </div>
       </div>
