@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
-import { useNavigate } from "react-router-dom";
 import DailyTextForm from "@/components/admin/DailyTextForm";
 import WeeklyBookForm from "@/components/admin/WeeklyBookForm";
 
@@ -12,7 +11,6 @@ const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.onAuthStateChange(async (event, session) => {
@@ -21,19 +19,14 @@ const Admin = () => {
       
       if (isAuth) {
         const userEmail = session?.user?.email;
-        if (userEmail !== ADMIN_EMAIL) {
-          toast({
-            title: "Acesso Negado",
-            description: "Você não tem permissão para acessar o painel administrativo.",
-            variant: "destructive",
-          });
-          navigate("/");
-        } else {
+        if (userEmail === ADMIN_EMAIL) {
           setIsAuthorized(true);
+        } else {
+          setIsAuthorized(false);
         }
       }
     });
-  }, [navigate, toast]);
+  }, []);
 
   const handleLogin = (name: string) => {
     setIsAuthenticated(true);
@@ -48,7 +41,14 @@ const Admin = () => {
   }
 
   if (!isAuthorized) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">Não encontrado</h1>
+          <p className="text-muted-foreground">Esta página não está disponível.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
