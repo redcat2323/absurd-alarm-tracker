@@ -46,9 +46,13 @@ const DailyTextForm = () => {
 
     const { error } = await supabase
       .from("daily_texts")
-      .upsert({ text: dailyText, date: selectedDate });
+      .upsert(
+        { text: dailyText, date: selectedDate },
+        { onConflict: 'date' }
+      );
 
     if (error) {
+      console.error("Error saving daily text:", error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar o texto diário.",
