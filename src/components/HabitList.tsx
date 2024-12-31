@@ -89,19 +89,30 @@ export const HabitList = () => {
 
   const updateHabitMutation = useMutation({
     mutationFn: async (habit: Habit) => {
-      const { data, error } = await supabase
-        .from('custom_habits')
-        .update({
-          completed: !habit.completed,
-          completed_days: habit.completed ? habit.completed_days - 1 : habit.completed_days + 1,
-          progress: calculateAnnualProgress(habit.completed ? habit.completed_days - 1 : habit.completed_days + 1),
-        })
-        .eq('id', habit.id)
-        .select()
-        .single();
+      // Only update custom habits in the database
+      if (habit.id > 5) {
+        const { data, error } = await supabase
+          .from('custom_habits')
+          .update({
+            completed: !habit.completed,
+            completed_days: habit.completed ? habit.completed_days - 1 : habit.completed_days + 1,
+            progress: calculateAnnualProgress(habit.completed ? habit.completed_days - 1 : habit.completed_days + 1),
+          })
+          .eq('id', habit.id)
+          .select()
+          .maybeSingle();
+        
+        if (error) throw error;
+        return data;
+      }
       
-      if (error) throw error;
-      return data;
+      // For default habits, just return the updated habit object
+      return {
+        ...habit,
+        completed: !habit.completed,
+        completed_days: habit.completed ? habit.completed_days - 1 : habit.completed_days + 1,
+        progress: calculateAnnualProgress(habit.completed ? habit.completed_days - 1 : habit.completed_days + 1),
+      };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
