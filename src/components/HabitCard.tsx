@@ -27,7 +27,7 @@ export const HabitCard = ({
     <Card
       className={cn(
         "p-6 transition-all hover:shadow-lg",
-        completed ? "border-emerald-500" : "border-muted"
+        completed ? "bg-emerald-500/10 border-emerald-500" : "border-muted"
       )}
     >
       <div className="flex items-center justify-between mb-4">
