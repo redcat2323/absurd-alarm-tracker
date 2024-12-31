@@ -31,12 +31,28 @@ export const WeeklyBook = () => {
 
   const handleDownloadPDF = async () => {
     if (book?.pdf_url) {
-      const { data } = supabase.storage
-        .from('book_files')
-        .getPublicUrl(book.pdf_url.split('/').pop() || '');
-      
-      if (data?.publicUrl) {
-        window.open(data.publicUrl, '_blank');
+      try {
+        // Extrair apenas o nome do arquivo da URL completa
+        const fileName = book.pdf_url.split('/').pop();
+        if (!fileName) return;
+
+        const { data, error } = await supabase.storage
+          .from('book_files')
+          .download(fileName);
+
+        if (error) {
+          console.error('Erro ao baixar o PDF:', error);
+          return;
+        }
+
+        // Criar um URL temporário para o blob e abrir em uma nova aba
+        const url = URL.createObjectURL(data);
+        window.open(url, '_blank');
+
+        // Limpar o URL do blob após um breve delay
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        console.error('Erro ao processar o PDF:', error);
       }
     }
   };
