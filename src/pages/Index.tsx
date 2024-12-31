@@ -80,42 +80,46 @@ const Index = () => {
     return Math.round((completedDays / daysInYear) * 100);
   };
 
-  const toggleHabit = (id: number, isCustom: boolean = false) => {
+  const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (isCustom) {
-      setCustomHabits(customHabits.map(async (habit) => {
-        if (habit.id === id) {
-          const newCompletedDays = habit.completed ? habit.completed_days - 1 : habit.completed_days + 1;
-          const newProgress = calculateAnnualProgress(newCompletedDays);
-          
-          try {
-            const { error } = await supabase
-              .from('custom_habits')
-              .update({
+      const updatedHabits = await Promise.all(
+        customHabits.map(async (habit) => {
+          if (habit.id === id) {
+            const newCompletedDays = habit.completed ? habit.completed_days - 1 : habit.completed_days + 1;
+            const newProgress = calculateAnnualProgress(newCompletedDays);
+            
+            try {
+              const { error } = await supabase
+                .from('custom_habits')
+                .update({
+                  completed: !habit.completed,
+                  completed_days: newCompletedDays,
+                  progress: newProgress
+                })
+                .eq('id', id);
+              
+              if (error) throw error;
+              
+              return {
+                ...habit,
                 completed: !habit.completed,
                 completed_days: newCompletedDays,
-                progress: newProgress
-              })
-              .eq('id', id);
-            
-            if (error) throw error;
-            
-            return {
-              ...habit,
-              completed: !habit.completed,
-              completed_days: newCompletedDays,
-              progress: newProgress,
-            };
-          } catch (error: any) {
-            toast({
-              title: "Erro ao atualizar hábito",
-              description: error.message,
-              variant: "destructive",
-            });
-            return habit;
+                progress: newProgress,
+              };
+            } catch (error: any) {
+              toast({
+                title: "Erro ao atualizar hábito",
+                description: error.message,
+                variant: "destructive",
+              });
+              return habit;
+            }
           }
-        }
-        return habit;
-      }));
+          return habit;
+        })
+      );
+
+      setCustomHabits(updatedHabits);
     } else {
       setHabits(habits.map(habit => {
         if (habit.id === id) {
