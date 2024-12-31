@@ -61,7 +61,7 @@ const Index = () => {
       
       return data.map(habit => ({
         ...habit,
-        icon: <Sun className="w-6 h-6" />, // Default icon for custom habits
+        icon: <Sun className="w-6 h-6" />,
       }));
     },
     enabled: isAuthenticated,
@@ -86,6 +86,24 @@ const Index = () => {
     },
     onError: (error) => {
       toast.error("Erro ao criar hábito: " + error.message);
+    },
+  });
+
+  const deleteHabitMutation = useMutation({
+    mutationFn: async (habitId: number) => {
+      const { error } = await supabase
+        .from('custom_habits')
+        .delete()
+        .eq('id', habitId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['habits'] });
+      toast.success("Hábito removido com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao remover hábito: " + error.message);
     },
   });
 
@@ -128,6 +146,10 @@ const Index = () => {
     if (newHabitTitle.trim()) {
       createHabitMutation.mutate(newHabitTitle.trim());
     }
+  };
+
+  const handleDeleteHabit = (habitId: number) => {
+    deleteHabitMutation.mutate(habitId);
   };
 
   if (!isAuthenticated) {
@@ -190,6 +212,8 @@ const Index = () => {
                 completed={habit.completed}
                 progress={habit.progress}
                 onClick={() => updateHabitMutation.mutate(habit)}
+                onDelete={habit.id > 5 ? () => handleDeleteHabit(habit.id) : undefined}
+                isCustom={habit.id > 5}
               />
             ))}
           </div>

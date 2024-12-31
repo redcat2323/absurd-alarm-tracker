@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Check, X } from "lucide-react";
+import { Check, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -10,9 +10,19 @@ interface HabitCardProps {
   completed: boolean;
   progress: number;
   onClick: () => void;
+  onDelete?: () => void;
+  isCustom?: boolean;
 }
 
-export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCardProps) => {
+export const HabitCard = ({ 
+  title, 
+  icon, 
+  completed, 
+  progress, 
+  onClick,
+  onDelete,
+  isCustom 
+}: HabitCardProps) => {
   return (
     <Card
       className={cn(
@@ -25,11 +35,26 @@ export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCa
           {icon}
           <h3 className="font-semibold text-lg">{title}</h3>
         </div>
-        {completed ? (
-          <Check className="w-6 h-6 text-emerald-500" />
-        ) : (
-          <X className="w-6 h-6 text-destructive" />
-        )}
+        <div className="flex items-center gap-2">
+          {isCustom && onDelete && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+          {completed ? (
+            <Check className="w-6 h-6 text-emerald-500" />
+          ) : (
+            <X className="w-6 h-6 text-destructive" />
+          )}
+        </div>
       </div>
       <Progress value={progress} className="h-2" />
       <p className="text-sm text-muted-foreground mt-2 mb-4">
