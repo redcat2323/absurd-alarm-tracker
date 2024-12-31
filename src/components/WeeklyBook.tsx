@@ -29,6 +29,18 @@ export const WeeklyBook = () => {
     fetchWeeklyBook();
   }, []);
 
+  const handleDownloadPDF = async () => {
+    if (book?.pdf_url) {
+      const { data } = supabase.storage
+        .from('book_files')
+        .getPublicUrl(book.pdf_url.split('/').pop() || '');
+      
+      if (data?.publicUrl) {
+        window.open(data.publicUrl, '_blank');
+      }
+    }
+  };
+
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/5">
       <div className="flex items-center justify-between mb-6">
@@ -57,7 +69,7 @@ export const WeeklyBook = () => {
               <Button
                 variant="outline"
                 className="flex items-center gap-2"
-                onClick={() => window.open(book.pdf_url!, '_blank')}
+                onClick={handleDownloadPDF}
               >
                 <FileText className="w-4 h-4" />
                 Baixar PDF
