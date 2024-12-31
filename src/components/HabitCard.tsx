@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Check, X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { getDaysInCurrentYear } from "@/utils/dateUtils";
 
 interface HabitCardProps {
   title: string;
@@ -25,6 +26,8 @@ export const HabitCard = ({
   onDelete,
   isCustom 
 }: HabitCardProps) => {
+  const totalDaysInYear = getDaysInCurrentYear();
+
   return (
     <Card
       className={cn(
@@ -57,7 +60,7 @@ export const HabitCard = ({
       </div>
       <Progress value={progress} className="h-2" />
       <p className="text-sm text-muted-foreground mt-2 mb-4">
-        {progress}% completo • {completedDays}/365 dias
+        {progress}% completo • {completedDays}/{totalDaysInYear} dias
       </p>
       <Button 
         variant={completed ? "outline" : "default"}

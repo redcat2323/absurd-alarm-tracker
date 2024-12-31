@@ -1,4 +1,4 @@
-import { Book, Droplets, Moon, Sun, Timer } from "lucide-react";
+import { Book, Droplets, Moon, Sun, Timer, Plus } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Auth } from "@/components/Auth";
@@ -9,6 +9,7 @@ import { HabitList } from "@/components/HabitList";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { Header } from "@/components/Header";
 import { CustomHabit, DefaultHabit } from "@/types/habits";
+import { getDaysInCurrentYear } from "@/utils/dateUtils";
 
 const Index = () => {
   const [habits, setHabits] = useState<DefaultHabit[]>([
@@ -83,7 +84,7 @@ const Index = () => {
   };
 
   const calculateAnnualProgress = (completedDays: number) => {
-    const daysInYear = 365;
+    const daysInYear = getDaysInCurrentYear();
     return Math.round((completedDays / daysInYear) * 100);
   };
 
