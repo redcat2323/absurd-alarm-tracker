@@ -17,8 +17,22 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const { habits, customHabits, toggleHabit, deleteHabit, refetchCustomHabits } = useHabits(userId);
 
   const checkAllHabitsCompleted = () => {
-    const allDefaultHabitsCompleted = habits.every(habit => habit.completed);
-    const allCustomHabitsCompleted = customHabits.every(habit => habit.completed);
+    // Verifica se há hábitos para checar
+    if (habits.length === 0 && (!customHabits || customHabits.length === 0)) {
+      return false;
+    }
+
+    // Verifica os hábitos padrão
+    const allDefaultHabitsCompleted = habits.length > 0 ? 
+      habits.every(habit => habit.completed) : true;
+
+    // Verifica os hábitos personalizados
+    const allCustomHabitsCompleted = customHabits && customHabits.length > 0 ? 
+      customHabits.every(habit => habit.completed) : true;
+
+    console.log('Default habits completed:', allDefaultHabitsCompleted);
+    console.log('Custom habits completed:', allCustomHabitsCompleted);
+    
     return allDefaultHabitsCompleted && allCustomHabitsCompleted;
   };
 
@@ -55,10 +69,14 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const handleToggleHabit = async (id: number, isCustom?: boolean) => {
     await toggleHabit(id, isCustom);
     
-    // Check if all habits are completed after toggling
-    if (checkAllHabitsCompleted()) {
-      celebrateCompletion();
-    }
+    // Adiciona um pequeno delay para garantir que o estado foi atualizado
+    setTimeout(() => {
+      const allCompleted = checkAllHabitsCompleted();
+      console.log('All habits completed?', allCompleted);
+      if (allCompleted) {
+        celebrateCompletion();
+      }
+    }, 100);
   };
 
   const addCustomHabit = async () => {
