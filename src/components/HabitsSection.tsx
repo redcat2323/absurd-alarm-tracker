@@ -22,66 +22,73 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const [newHabitTitle, setNewHabitTitle] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { habits, customHabits, toggleHabit, deleteHabit, refetchCustomHabits } = useHabits(userId);
-  const [lastCompletionState, setLastCompletionState] = useState(false);
 
-  const checkAndCelebrate = () => {
+  const checkAndCelebrate = (habitId: number, isCustom: boolean | undefined) => {
     // Ensure we have habits to check
     if (!habits.length && !customHabits?.length) return;
 
-    const defaultHabitsCompleted = habits.every(habit => habit.completed);
-    const customHabitsCompleted = customHabits?.every(habit => habit.completed) ?? true;
-    const allHabitsCompleted = defaultHabitsCompleted && customHabitsCompleted;
+    // Find the habit that was just toggled
+    const toggledHabit = isCustom 
+      ? customHabits?.find(h => h.id === habitId)
+      : habits.find(h => h.id === habitId);
 
-    console.info("Checking celebration conditions:");
-    console.info("Default habits completed:", defaultHabitsCompleted);
-    console.info("Custom habits completed:", customHabitsCompleted);
-    console.info("All habits completed?", allHabitsCompleted);
-    console.info("Last completion state:", lastCompletionState);
+    // Only proceed if we're marking a habit as completed
+    if (!toggledHabit?.completed) {
+      const defaultHabitsCompleted = habits.every(habit => 
+        habit.id === habitId ? !habit.completed : habit.completed
+      );
+      const customHabitsCompleted = customHabits?.every(habit => 
+        habit.id === habitId ? !habit.completed : habit.completed
+      ) ?? true;
 
-    if (allHabitsCompleted && !lastCompletionState) {
-      setLastCompletionState(true);
-      
-      // Show celebration toast with random message
-      const randomMessage = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
-      toast({
-        title: randomMessage,
-        className: "animate-bounce",
-      });
+      const willAllBeCompleted = defaultHabitsCompleted && customHabitsCompleted;
 
-      // Trigger confetti animation
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#9b87f5', '#7E69AB', '#D946EF'],
-      });
+      console.info("Checking celebration conditions:");
+      console.info("Default habits will be completed:", defaultHabitsCompleted);
+      console.info("Custom habits will be completed:", customHabitsCompleted);
+      console.info("All habits will be completed?", willAllBeCompleted);
 
-      // Add a second burst of confetti for more impact
-      setTimeout(() => {
+      if (willAllBeCompleted) {
+        // Show celebration toast with random message
+        const randomMessage = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
+        toast({
+          title: randomMessage,
+          className: "animate-bounce",
+        });
+
+        // Trigger confetti animation
         confetti({
-          particleCount: 50,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
           colors: ['#9b87f5', '#7E69AB', '#D946EF'],
         });
-        confetti({
-          particleCount: 50,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#9b87f5', '#7E69AB', '#D946EF'],
-        });
-      }, 250);
-    } else if (!allHabitsCompleted) {
-      setLastCompletionState(false);
+
+        // Add a second burst of confetti for more impact
+        setTimeout(() => {
+          confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#9b87f5', '#7E69AB', '#D946EF'],
+          });
+          confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#9b87f5', '#7E69AB', '#D946EF'],
+          });
+        }, 250);
+      }
     }
   };
 
   const handleToggleHabit = async (id: number, isCustom?: boolean) => {
+    // Check celebration before toggling the habit
+    checkAndCelebrate(id, isCustom);
     await toggleHabit(id, isCustom);
-    // Add a small delay to ensure state updates before checking completion
-    setTimeout(checkAndCelebrate, 100);
   };
 
   const addCustomHabit = async () => {
