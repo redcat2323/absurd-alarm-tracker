@@ -7,6 +7,7 @@ import { WeeklyBook } from "@/components/WeeklyBook";
 import { supabase } from "@/integrations/supabase/client";
 import { HabitList } from "@/components/HabitList";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
+import { Header } from "@/components/Header";
 import { CustomHabit, DefaultHabit } from "@/types/habits";
 
 const Index = () => {
@@ -242,15 +243,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            <span className="inline md:inline-block">O Pior Ano</span>{" "}
-            <span className="inline md:inline-block">da Sua Vida</span>
-          </h1>
-          <p className="text-muted-foreground">
-            Bem-vindo, {userName}! | Dia {dayOfYear} do ano
-          </p>
-        </div>
+        <Header userName={userName} dayOfYear={dayOfYear} />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
