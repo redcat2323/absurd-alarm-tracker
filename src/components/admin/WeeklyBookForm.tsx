@@ -8,6 +8,10 @@ import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { startOfWeek, format } from "date-fns";
 import { FileUp, Loader2 } from "lucide-react";
+import { WeeklyBooksHistory } from "./WeeklyBooksHistory";
+import type { Database } from "@/integrations/supabase/types";
+
+type WeeklyBook = Database["public"]["Tables"]["weekly_books"]["Row"];
 
 const WeeklyBookForm = () => {
   const [bookTitle, setBookTitle] = useState("");
@@ -21,7 +25,32 @@ const WeeklyBookForm = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPdfUrl, setCurrentPdfUrl] = useState<string | null>(null);
+  const [weeklyBooks, setWeeklyBooks] = useState<WeeklyBook[]>([]);
   const { toast } = useToast();
+
+  const fetchWeeklyBooks = async () => {
+    const { data, error } = await supabase
+      .from("weekly_books")
+      .select()
+      .order('week_start', { ascending: false });
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar histórico de livros.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data) {
+      setWeeklyBooks(data);
+    }
+  };
+
+  useEffect(() => {
+    fetchWeeklyBooks();
+  }, []);
 
   useEffect(() => {
     const loadExistingBook = async () => {
@@ -145,6 +174,7 @@ const WeeklyBookForm = () => {
           description: "Livro da semana atualizado com sucesso!",
         });
         setPdfFile(null);
+        fetchWeeklyBooks();
       }
     } catch (error) {
       console.error("Error in weekly book submission:", error);
@@ -158,85 +188,96 @@ const WeeklyBookForm = () => {
     }
   };
 
+  const handleViewPdf = (pdfUrl: string) => {
+    window.open(pdfUrl, '_blank');
+  };
+
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Livro da Semana</h2>
-      <form onSubmit={handleWeeklyBookSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="week-start">Data de Início da Semana (Domingo)</Label>
-          <Input
-            id="week-start"
-            type="date"
-            value={weekStartDate}
-            onChange={(e) => handleWeekStartChange(e.target.value)}
-            className="mb-4"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="book-title">Título do Livro</Label>
-          <Input
-            id="book-title"
-            value={bookTitle}
-            onChange={(e) => setBookTitle(e.target.value)}
-            placeholder="Título do livro"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="book-author">Autor do Livro</Label>
-          <Input
-            id="book-author"
-            value={bookAuthor}
-            onChange={(e) => setBookAuthor(e.target.value)}
-            placeholder="Autor do livro"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="book-description">Descrição do Livro</Label>
-          <RichTextEditor
-            value={bookDescription}
-            onChange={setBookDescription}
-            placeholder="Descrição do livro..."
-          />
-        </div>
-        <div>
-          <Label htmlFor="pdf-file">PDF do Livro</Label>
-          <div className="flex items-center gap-4">
+    <div className="space-y-8">
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">Livro da Semana</h2>
+        <form onSubmit={handleWeeklyBookSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="week-start">Data de Início da Semana (Domingo)</Label>
             <Input
-              id="pdf-file"
-              type="file"
-              accept=".pdf"
-              onChange={handleFileChange}
-              className="flex-1"
+              id="week-start"
+              type="date"
+              value={weekStartDate}
+              onChange={(e) => handleWeekStartChange(e.target.value)}
+              className="mb-4"
+              required
             />
-            {currentPdfUrl && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => window.open(currentPdfUrl, '_blank')}
-              >
-                Ver PDF Atual
-              </Button>
-            )}
           </div>
-        </div>
-        <Button type="submit" disabled={isSubmitting} className="w-full">
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <FileUp className="mr-2 h-4 w-4" />
-              Salvar Livro da Semana
-            </>
-          )}
-        </Button>
-      </form>
-    </Card>
+          <div>
+            <Label htmlFor="book-title">Título do Livro</Label>
+            <Input
+              id="book-title"
+              value={bookTitle}
+              onChange={(e) => setBookTitle(e.target.value)}
+              placeholder="Título do livro"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="book-author">Autor do Livro</Label>
+            <Input
+              id="book-author"
+              value={bookAuthor}
+              onChange={(e) => setBookAuthor(e.target.value)}
+              placeholder="Autor do livro"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="book-description">Descrição do Livro</Label>
+            <RichTextEditor
+              value={bookDescription}
+              onChange={setBookDescription}
+              placeholder="Descrição do livro..."
+            />
+          </div>
+          <div>
+            <Label htmlFor="pdf-file">PDF do Livro</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id="pdf-file"
+                type="file"
+                accept=".pdf"
+                onChange={handleFileChange}
+                className="flex-1"
+              />
+              {currentPdfUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleViewPdf(currentPdfUrl)}
+                >
+                  Ver PDF Atual
+                </Button>
+              )}
+            </div>
+          </div>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <FileUp className="mr-2 h-4 w-4" />
+                Salvar Livro da Semana
+              </>
+            )}
+          </Button>
+        </form>
+      </Card>
+
+      <Card className="p-6">
+        <h2 className="text-xl font-semibold mb-4">Histórico de Livros</h2>
+        <WeeklyBooksHistory books={weeklyBooks} onViewPdf={handleViewPdf} />
+      </Card>
+    </div>
   );
 };
 
