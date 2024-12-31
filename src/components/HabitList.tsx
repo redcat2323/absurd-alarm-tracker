@@ -12,16 +12,16 @@ interface Habit {
 }
 
 interface HabitListProps {
-  defaultHabits: Habit[];
+  habits: Habit[];
   customHabits: CustomHabit[];
   onToggleHabit: (id: number, isCustom?: boolean) => Promise<void>;
   onDeleteHabit: (id: number) => Promise<void>;
 }
 
-export const HabitList = ({ defaultHabits = [], customHabits = [], onToggleHabit, onDeleteHabit }: HabitListProps) => {
+export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }: HabitListProps) => {
   return (
     <div className="space-y-4">
-      {defaultHabits.map((habit) => (
+      {habits.map((habit) => (
         <HabitCard
           key={habit.id}
           title={habit.title}
