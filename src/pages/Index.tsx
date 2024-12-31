@@ -8,24 +8,53 @@ import { supabase } from "@/integrations/supabase/client";
 import { HabitList } from "@/components/HabitList";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { Header } from "@/components/Header";
-import { CustomHabit, DefaultHabit } from "@/types/habits";
+import { CustomHabit, DefaultHabit, DefaultHabitCompletion } from "@/types/habits";
 import { getDaysInCurrentYear } from "@/utils/dateUtils";
 
-const Index = () => {
-  const [habits, setHabits] = useState<DefaultHabit[]>([
-    { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
-    { id: 2, title: "Banho Natural", icon: <Droplets className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
-    { id: 3, title: "Devocional - Boot Diário", icon: <Sun className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
-    { id: 4, title: "Leitura Diária", icon: <Book className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
-    { id: 5, title: "Exercício Diário", icon: <Moon className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
-  ]);
+const DEFAULT_HABITS = [
+  { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" /> },
+  { id: 2, title: "Banho Natural", icon: <Droplets className="w-6 h-6" /> },
+  { id: 3, title: "Devocional - Boot Diário", icon: <Sun className="w-6 h-6" /> },
+  { id: 4, title: "Leitura Diária", icon: <Book className="w-6 h-6" /> },
+  { id: 5, title: "Exercício Diário", icon: <Moon className="w-6 h-6" /> },
+];
 
+const Index = () => {
+  const [habits, setHabits] = useState<DefaultHabit[]>([]);
   const [customHabits, setCustomHabits] = useState<CustomHabit[]>([]);
   const [newHabitTitle, setNewHabitTitle] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState("");
   const [dayOfYear, setDayOfYear] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const initializeDefaultHabits = async (userId: string) => {
+    try {
+      const { data: completions } = await supabase
+        .from('default_habit_completions')
+        .select('*')
+        .eq('user_id', userId);
+
+      const habitsWithCompletions = DEFAULT_HABITS.map(habit => {
+        const completion = completions?.find(c => c.habit_id === habit.id);
+        return {
+          ...habit,
+          completed: false,
+          completedDays: completion?.completed_days || 0,
+          progress: completion?.progress || 0,
+        };
+      });
+
+      setHabits(habitsWithCompletions);
+    } catch (error) {
+      console.error('Error loading habit completions:', error);
+      toast({
+        title: "Erro ao carregar hábitos",
+        description: "Não foi possível carregar seus hábitos completados.",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     const calculateDayOfYear = () => {
@@ -38,7 +67,18 @@ const Index = () => {
     };
 
     calculateDayOfYear();
-    fetchCustomHabits();
+    
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsAuthenticated(true);
+        setUserName(session.user.user_metadata?.name || "Usuário");
+        await initializeDefaultHabits(session.user.id);
+        await fetchCustomHabits();
+      }
+    };
+    
+    checkSession();
   }, []);
 
   const deleteHabit = async (id: number) => {
@@ -89,6 +129,9 @@ const Index = () => {
   };
 
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     if (isCustom) {
       const updatedHabits = await Promise.all(
         customHabits.map(async (habit) => {
@@ -129,26 +172,53 @@ const Index = () => {
 
       setCustomHabits(updatedHabits);
     } else {
-      setHabits(habits.map(habit => {
-        if (habit.id === id) {
-          const newCompletedDays = habit.completed ? habit.completedDays - 1 : habit.completedDays + 1;
-          const newProgress = calculateAnnualProgress(newCompletedDays);
-          
-          return {
-            ...habit,
-            completed: !habit.completed,
-            completedDays: newCompletedDays,
-            progress: newProgress,
-          };
-        }
-        return habit;
-      }));
-    }
+      const habitToUpdate = habits.find(h => h.id === id);
+      if (!habitToUpdate) return;
 
-    toast({
-      title: "Hábito atualizado!",
-      description: "Seu progresso anual foi atualizado.",
-    });
+      const newCompletedDays = habitToUpdate.completed ? 
+        habitToUpdate.completedDays - 1 : 
+        habitToUpdate.completedDays + 1;
+      
+      const newProgress = calculateAnnualProgress(newCompletedDays);
+
+      try {
+        const { error } = await supabase
+          .from('default_habit_completions')
+          .upsert({
+            user_id: user.id,
+            habit_id: id,
+            completed_days: newCompletedDays,
+            progress: newProgress
+          }, {
+            onConflict: 'user_id,habit_id'
+          });
+
+        if (error) throw error;
+
+        setHabits(habits.map(habit => {
+          if (habit.id === id) {
+            return {
+              ...habit,
+              completed: !habit.completed,
+              completedDays: newCompletedDays,
+              progress: newProgress,
+            };
+          }
+          return habit;
+        }));
+
+        toast({
+          title: "Hábito atualizado!",
+          description: "Seu progresso anual foi atualizado.",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Erro ao atualizar hábito",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    }
   };
 
   const addCustomHabit = async () => {
@@ -227,10 +297,14 @@ const Index = () => {
     return () => clearTimeout(resetTimer);
   }, [habits, customHabits]);
 
-  const handleLogin = (name: string) => {
+  const handleLogin = async (name: string) => {
     setIsAuthenticated(true);
     setUserName(name);
-    fetchCustomHabits();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await initializeDefaultHabits(user.id);
+      await fetchCustomHabits();
+    }
   };
 
   if (!isAuthenticated) {

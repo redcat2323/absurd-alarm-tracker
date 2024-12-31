@@ -14,3 +14,11 @@ export interface DefaultHabit {
   progress: number;
   completedDays: number;
 }
+
+export interface DefaultHabitCompletion {
+  id: number;
+  user_id: string;
+  habit_id: number;
+  completed_days: number;
+  progress: number;
+}
