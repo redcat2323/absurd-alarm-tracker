@@ -157,18 +157,21 @@ export const HabitList = () => {
         </Dialog>
       </div>
       
-      {allHabits.map((habit) => (
-        <HabitCard
-          key={habit.id}
-          title={habit.title}
-          icon={habit.icon}
-          completed={habit.completed}
-          progress={habit.progress}
-          onClick={() => updateHabitMutation.mutate(habit)}
-          onDelete={habit.id > 5 ? () => deleteHabitMutation.mutate(habit.id) : undefined}
-          isCustom={habit.id > 5}
-        />
-      ))}
+      {allHabits.map((habit) => {
+        const uniqueKey = `habit-${habit.id}-${habit.title.replace(/\s+/g, '-')}`;
+        return (
+          <HabitCard
+            key={uniqueKey}
+            title={habit.title}
+            icon={habit.icon}
+            completed={habit.completed}
+            progress={habit.progress}
+            onClick={() => updateHabitMutation.mutate(habit)}
+            onDelete={habit.id > 5 ? () => deleteHabitMutation.mutate(habit.id) : undefined}
+            isCustom={habit.id > 5}
+          />
+        );
+      })}
     </div>
   );
 };
