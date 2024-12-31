@@ -15,12 +15,25 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
+    // Initialize auth state
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Clear any stale data if no valid session exists
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+    };
+    
+    initAuth();
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        localStorage.setItem('supabase.auth.token', session?.access_token || '');
+      if (event === 'SIGNED_IN' && session) {
+        localStorage.setItem('supabase.auth.token', session.access_token);
       } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('supabase.auth.token');
+        localStorage.clear();
+        sessionStorage.clear();
       }
     });
 

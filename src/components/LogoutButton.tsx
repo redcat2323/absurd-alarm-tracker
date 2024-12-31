@@ -10,18 +10,20 @@ export const LogoutButton = () => {
 
   const handleLogout = async () => {
     try {
+      // Clear any stored session data first
+      localStorage.clear(); // Clear all localStorage data
+      sessionStorage.clear(); // Clear all sessionStorage data
+      
+      // Then sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      
-      // Clear any stored session data
-      localStorage.removeItem('supabase.auth.token');
       
       toast({
         title: "Logout realizado com sucesso",
         description: "Você foi desconectado da sua conta",
       });
       
-      // Force a page reload to clear any cached auth state
+      // Force a complete page reload to clear any cached states
       window.location.href = '/';
     } catch (error: any) {
       console.error('Logout error:', error);
