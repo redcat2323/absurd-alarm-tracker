@@ -42,7 +42,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     },
   });
 
-  const setLink = () => {
+  const setLink = (e: React.MouseEvent) => {
+    e.preventDefault(); // Previne a submissão do formulário
+    
     const previousUrl = editor?.getAttributes('link').href;
     const url = window.prompt('URL:', previousUrl);
     
@@ -66,6 +68,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2 p-1 border rounded-md bg-muted/50">
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -74,6 +77,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <Bold className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -82,6 +86,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <Italic className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -90,6 +95,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <Heading2 className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -98,6 +104,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <List className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -106,6 +113,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <ListOrdered className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -114,6 +122,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <Quote className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={setLink}
@@ -122,6 +131,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <LinkIcon className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().undo().run()}
@@ -129,6 +139,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           <Undo className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().redo().run()}
