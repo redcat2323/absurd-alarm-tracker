@@ -15,12 +15,19 @@ const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Configura a persistência da sessão
-    supabase.auth.onAuthStateChange((event, session) => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN') {
         localStorage.setItem('supabase.auth.token', session?.access_token || '');
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('supabase.auth.token');
       }
     });
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (

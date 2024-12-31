@@ -10,17 +10,24 @@ export const LogoutButton = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      // Clear any stored session data
       localStorage.removeItem('supabase.auth.token');
+      
       toast({
         title: "Logout realizado com sucesso",
         description: "Você foi desconectado da sua conta",
       });
-      navigate('/');
-    } catch (error) {
+      
+      // Force a page reload to clear any cached auth state
+      window.location.href = '/';
+    } catch (error: any) {
+      console.error('Logout error:', error);
       toast({
         title: "Erro ao fazer logout",
-        description: "Tente novamente mais tarde",
+        description: error.message || "Tente novamente mais tarde",
         variant: "destructive",
       });
     }
