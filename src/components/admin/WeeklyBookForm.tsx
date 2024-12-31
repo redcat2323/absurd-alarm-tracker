@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -17,17 +17,66 @@ const WeeklyBookForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  // Carregar livro existente quando a data for alterada
+  useEffect(() => {
+    const loadExistingBook = async () => {
+      const { data } = await supabase
+        .from("weekly_books")
+        .select()
+        .eq("week_start", weekStartDate)
+        .maybeSingle();
+
+      if (data) {
+        setBookTitle(data.title);
+        setBookAuthor(data.author);
+        setBookDescription(data.description || "");
+      } else {
+        setBookTitle("");
+        setBookAuthor("");
+        setBookDescription("");
+      }
+    };
+
+    loadExistingBook();
+  }, [weekStartDate]);
+
   const handleWeeklyBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("weekly_books").upsert({
-        title: bookTitle,
-        author: bookAuthor,
-        description: bookDescription,
-        week_start: weekStartDate,
-      });
+      // Primeiro, verifica se já existe um livro para esta semana
+      const { data: existingBook } = await supabase
+        .from("weekly_books")
+        .select()
+        .eq("week_start", weekStartDate)
+        .maybeSingle();
+
+      let error;
+      
+      if (existingBook) {
+        // Se existe, atualiza o registro
+        const { error: updateError } = await supabase
+          .from("weekly_books")
+          .update({
+            title: bookTitle,
+            author: bookAuthor,
+            description: bookDescription,
+          })
+          .eq("week_start", weekStartDate);
+        error = updateError;
+      } else {
+        // Se não existe, insere um novo
+        const { error: insertError } = await supabase
+          .from("weekly_books")
+          .insert({
+            title: bookTitle,
+            author: bookAuthor,
+            description: bookDescription,
+            week_start: weekStartDate,
+          });
+        error = insertError;
+      }
 
       if (error) {
         console.error("Error saving weekly book:", error);
@@ -41,9 +90,6 @@ const WeeklyBookForm = () => {
           title: "Sucesso",
           description: "Livro da semana atualizado com sucesso!",
         });
-        setBookTitle("");
-        setBookAuthor("");
-        setBookDescription("");
       }
     } catch (error) {
       console.error("Error in weekly book submission:", error);
