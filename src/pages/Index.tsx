@@ -1,42 +1,68 @@
-import { Book, Droplets, Moon, Sun, Timer, Plus } from "lucide-react";
-import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { AdminNav } from "@/components/AdminNav";
 import { Auth } from "@/components/Auth";
+import { Header } from "@/components/Header";
 import { DailyText } from "@/components/DailyText";
 import { WeeklyBook } from "@/components/WeeklyBook";
-import { supabase } from "@/integrations/supabase/client";
 import { HabitList } from "@/components/HabitList";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
-import { Header } from "@/components/Header";
-import { CustomHabit, DefaultHabit } from "@/types/habits";
-import { getDaysInCurrentYear } from "@/utils/dateUtils";
-import { resetAnnualProgress, shouldResetProgress } from "@/utils/yearTransition";
-
-const DEFAULT_HABITS = [
-  { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" /> },
-  { id: 2, title: "Banho Natural", icon: <Droplets className="w-6 h-6" /> },
-  { id: 3, title: "Devocional - Boot Diário", icon: <Sun className="w-6 h-6" /> },
-  { id: 4, title: "Leitura Diária", icon: <Book className="w-6 h-6" /> },
-  { id: 5, title: "Exercício Diário", icon: <Moon className="w-6 h-6" /> },
-];
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const Index = () => {
-  const [habits, setHabits] = useState<DefaultHabit[]>([]);
-  const [customHabits, setCustomHabits] = useState<CustomHabit[]>([]);
-  const [newHabitTitle, setNewHabitTitle] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState<any>(null);
   const [userName, setUserName] = useState("");
-  const [dayOfYear, setDayOfYear] = useState(0);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const today = new Date();
+  const formattedDate = format(today, "yyyy-MM-dd");
 
-  const initializeDefaultHabits = async (userId: string) => {
-    try {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        setUserName(session.user.user_metadata?.name || "Usuário");
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        setUserName(session.user.user_metadata?.name || "Usuário");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Query para buscar hábitos padrão com cache de 5 minutos
+  const { data: defaultHabits = [] } = useQuery({
+    queryKey: ["defaultHabits", session?.user?.id, formattedDate],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       const { data: completions } = await supabase
-        .from('default_habit_completions')
-        .select('*')
-        .eq('user_id', userId);
+        .from("default_habit_completions")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .gte("created_at", `${formattedDate}T00:00:00`)
+        .lte("created_at", `${formattedDate}T23:59:59`);
 
-      const habitsWithCompletions = DEFAULT_HABITS.map(habit => {
+      const defaultHabitsList = [
+        { id: 1, title: "Ler a Bíblia" },
+        { id: 2, title: "Orar" },
+        { id: 3, title: "Exercitar" },
+        { id: 4, title: "Estudar" },
+      ];
+
+      return defaultHabitsList.map((habit) => {
         const completion = completions?.find(c => c.habit_id === habit.id);
         return {
           ...habit,
@@ -45,146 +71,113 @@ const Index = () => {
           progress: completion?.progress || 0,
         };
       });
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
 
-      setHabits(habitsWithCompletions);
-    } catch (error) {
-      console.error('Error loading habit completions:', error);
-      toast({
-        title: "Erro ao carregar hábitos",
-        description: "Não foi possível carregar seus hábitos completados.",
-        variant: "destructive",
-      });
+  // Query para buscar hábitos personalizados com cache de 5 minutos
+  const { data: customHabits = [], refetch: refetchCustomHabits } = useQuery({
+    queryKey: ["customHabits", session?.user?.id, formattedDate],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
+      const { data } = await supabase
+        .from("custom_habits")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .gte("created_at", `${formattedDate}T00:00:00`)
+        .lte("created_at", `${formattedDate}T23:59:59`);
+      
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+
+  // Query para buscar texto diário com cache de 1 hora
+  const { data: dailyText } = useQuery({
+    queryKey: ["dailyText", formattedDate],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("daily_texts")
+        .select("*")
+        .eq("date", formattedDate)
+        .single();
+      return data;
+    },
+    staleTime: 60 * 60 * 1000, // 1 hora
+  });
+
+  // Query para buscar livro semanal com cache de 1 dia
+  const { data: weeklyBook } = useQuery({
+    queryKey: ["weeklyBook"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("weekly_books")
+        .select("*")
+        .lte("week_start", formattedDate)
+        .order("week_start", { ascending: false })
+        .limit(1)
+        .single();
+      return data;
+    },
+    staleTime: 24 * 60 * 60 * 1000, // 24 horas
+  });
+
+  const initializeDefaultHabits = async (userId: string) => {
+    const { data: existingCompletions } = await supabase
+      .from("default_habit_completions")
+      .select("habit_id")
+      .eq("user_id", userId)
+      .gte("created_at", `${formattedDate}T00:00:00`)
+      .lte("created_at", `${formattedDate}T23:59:59`);
+
+    if (!existingCompletions || existingCompletions.length === 0) {
+      const defaultHabitsData = [1, 2, 3, 4].map((habitId) => ({
+        user_id: userId,
+        habit_id: habitId,
+        completed_days: 0,
+        progress: 0,
+        completed: false,
+      }));
+
+      await supabase.from("default_habit_completions").insert(defaultHabitsData);
+      queryClient.invalidateQueries({ queryKey: ["defaultHabits"] });
     }
   };
 
-  useEffect(() => {
-    const calculateDayOfYear = () => {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const diff = now.getTime() - start.getTime();
-      const oneDay = 1000 * 60 * 60 * 24;
-      const day = Math.floor(diff / oneDay);
-      setDayOfYear(day);
-    };
-
-    calculateDayOfYear();
-    
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsAuthenticated(true);
-        setUserName(session.user.user_metadata?.name || "Usuário");
-        await initializeDefaultHabits(session.user.id);
-        await fetchCustomHabits();
-      }
-    };
-    
-    checkSession();
-  }, []);
-
-  const deleteHabit = async (id: number) => {
-    try {
-      const { error } = await supabase
-        .from('custom_habits')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      setCustomHabits(customHabits.filter(habit => habit.id !== id));
-      
-      toast({
-        title: "Hábito removido",
-        description: "O hábito personalizado foi removido com sucesso.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao remover hábito",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const fetchCustomHabits = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('custom_habits')
-        .select('*');
-      
-      if (error) throw error;
-      
-      setCustomHabits(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Erro ao carregar hábitos personalizados",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const calculateAnnualProgress = (completedDays: number) => {
-    const daysInYear = getDaysInCurrentYear();
-    return Number(((completedDays / daysInYear) * 100).toFixed(2));
-  };
-
-  const toggleHabit = async (id: number, isCustom: boolean = false) => {
-    const { data: { user } } = await supabase.auth.getUser();
+  const toggleHabit = async (
+    id: number,
+    isCustomHabit: boolean,
+    habitToUpdate: any
+  ) => {
+    const user = session?.user;
     if (!user) return;
 
-    if (isCustom) {
-      const updatedHabits = await Promise.all(
-        customHabits.map(async (habit) => {
-          if (habit.id === id) {
-            const newCompletedDays = habit.completed ? habit.completed_days - 1 : habit.completed_days + 1;
-            const newProgress = calculateAnnualProgress(newCompletedDays);
-            
-            try {
-              const { error } = await supabase
-                .from('custom_habits')
-                .update({
-                  completed: !habit.completed,
-                  completed_days: newCompletedDays,
-                  progress: newProgress
-                })
-                .eq('id', id);
-              
-              if (error) throw error;
-              
-              return {
-                ...habit,
-                completed: !habit.completed,
-                completed_days: newCompletedDays,
-                progress: newProgress,
-              };
-            } catch (error: any) {
-              toast({
-                title: "Erro ao atualizar hábito",
-                description: error.message,
-                variant: "destructive",
-              });
-              return habit;
-            }
-          }
-          return habit;
-        })
-      );
+    try {
+      if (isCustomHabit) {
+        const newCompletedDays = habitToUpdate.completed
+          ? Math.max(0, (habitToUpdate.completedDays || 0) - 1)
+          : (habitToUpdate.completedDays || 0) + 1;
+        const newProgress = (newCompletedDays / 365) * 100;
 
-      setCustomHabits(updatedHabits);
-    } else {
-      const habitToUpdate = habits.find(h => h.id === id);
-      if (!habitToUpdate) return;
+        await supabase
+          .from("custom_habits")
+          .update({
+            completed: !habitToUpdate.completed,
+            completed_days: newCompletedDays,
+            progress: newProgress,
+          })
+          .eq("id", id);
 
-      const newCompletedDays = habitToUpdate.completed ? 
-        habitToUpdate.completedDays - 1 : 
-        habitToUpdate.completedDays + 1;
-      
-      const newProgress = calculateAnnualProgress(newCompletedDays);
+        refetchCustomHabits();
+      } else {
+        const newCompletedDays = habitToUpdate.completed
+          ? Math.max(0, (habitToUpdate.completedDays || 0) - 1)
+          : (habitToUpdate.completedDays || 0) + 1;
+        const newProgress = (newCompletedDays / 365) * 100;
 
-      try {
-        const { error } = await supabase
-          .from('default_habit_completions')
+        await supabase
+          .from("default_habit_completions")
           .upsert({
             user_id: user.id,
             habit_id: id,
@@ -192,178 +185,118 @@ const Index = () => {
             completed_days: newCompletedDays,
             progress: newProgress
           }, {
-            onConflict: 'user_id,habit_id'
+            onConflict: "user_id,habit_id",
           });
 
-        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ["defaultHabits"] });
+      }
 
-        setHabits(habits.map(habit => {
-          if (habit.id === id) {
-            return {
-              ...habit,
-              completed: !habit.completed,
-              completedDays: newCompletedDays,
-              progress: newProgress,
-            };
-          }
-          return habit;
-        }));
-
+      if (!habitToUpdate.completed && newCompletedDays === 365) {
         toast({
-          title: "Hábito atualizado!",
-          description: "Seu progresso anual foi atualizado.",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Erro ao atualizar hábito",
-          description: error.message,
-          variant: "destructive",
+          title: "Parabéns! 🎉",
+          description: "Você completou 365 dias deste hábito!",
         });
       }
-    }
-  };
-
-  const addCustomHabit = async () => {
-    if (!newHabitTitle.trim()) {
+    } catch (error) {
+      console.error("Error toggling habit:", error);
       toast({
         title: "Erro",
-        description: "O título do hábito não pode estar vazio",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('custom_habits')
-        .insert([
-          {
-            title: newHabitTitle,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-          }
-        ])
-        .select();
-
-      if (error) throw error;
-
-      if (data) {
-        setCustomHabits([...customHabits, data[0]]);
-        setNewHabitTitle("");
-        setIsDialogOpen(false);
-        toast({
-          title: "Sucesso!",
-          description: "Hábito personalizado criado com sucesso.",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro ao criar hábito",
-        description: error.message,
+        description: "Não foi possível atualizar o hábito.",
         variant: "destructive",
       });
     }
   };
 
-  useEffect(() => {
-    const resetHabits = () => {
-      setHabits(habits.map(habit => ({
-        ...habit,
-        completed: false
-      })));
-      
-      customHabits.forEach(async (habit) => {
-        try {
-          await supabase
-            .from('custom_habits')
-            .update({ completed: false })
-            .eq('id', habit.id);
-        } catch (error) {
-          console.error('Error resetting custom habit:', error);
-        }
-      });
-      
-      setCustomHabits(customHabits.map(habit => ({
-        ...habit,
-        completed: false
-      })));
-    };
-
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    const timeUntilReset = tomorrow.getTime() - now.getTime();
-    const resetTimer = setTimeout(resetHabits, timeUntilReset);
-
-    return () => clearTimeout(resetTimer);
-  }, [habits, customHabits]);
+  const handleLogin = async (name: string) => {
+    setUserName(name);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await initializeDefaultHabits(user.id);
+    }
+  };
 
   useEffect(() => {
     const checkYearTransition = async () => {
-      if (shouldResetProgress()) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const success = await resetAnnualProgress(user.id);
-          if (success) {
+      if (!session?.user) return;
+
+      const lastLoginKey = `lastLogin_${session.user.id}`;
+      const lastLogin = localStorage.getItem(lastLoginKey);
+      const currentYear = new Date().getFullYear();
+
+      if (lastLogin) {
+        const lastLoginYear = new Date(lastLogin).getFullYear();
+        if (currentYear > lastLoginYear) {
+          const { data: habits } = await supabase
+            .from("default_habit_completions")
+            .select("*")
+            .eq("user_id", session.user.id);
+
+          if (habits && habits.length > 0) {
+            await supabase
+              .from("default_habit_completions")
+              .update({
+                completed_days: 0,
+                progress: 0,
+                completed: false,
+              })
+              .eq("user_id", session.user.id);
+
+            await supabase
+              .from("custom_habits")
+              .update({
+                completed_days: 0,
+                progress: 0,
+                completed: false,
+              })
+              .eq("user_id", session.user.id);
+
             toast({
               title: "Feliz Ano Novo! 🎉",
               description: "Seus hábitos foram resetados para o novo ano.",
             });
-            await initializeDefaultHabits(user.id);
-            await fetchCustomHabits();
+            await initializeDefaultHabits(session.user.id);
+            await refetchCustomHabits();
           }
         }
       }
+
+      localStorage.setItem(lastLoginKey, new Date().toISOString());
     };
 
     checkYearTransition();
-  }, []);
+  }, [session]);
 
-  const handleLogin = async (name: string) => {
-    setIsAuthenticated(true);
-    setUserName(name);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await initializeDefaultHabits(user.id);
-      await fetchCustomHabits();
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background p-4 sm:p-8 flex items-center justify-center">
-        <Auth onLogin={handleLogin} />
-      </div>
-    );
+  if (!session) {
+    return <Auth onLogin={handleLogin} />;
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto">
-        <Header userName={userName} dayOfYear={dayOfYear} />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="min-h-screen bg-background">
+      <AdminNav />
+      <div className="container mx-auto px-4 py-8">
+        <Header userName={userName} />
+        <div className="mt-8 space-y-8">
+          {dailyText && <DailyText text={dailyText.text} />}
+          {weeklyBook && (
+            <WeeklyBook
+              title={weeklyBook.title}
+              author={weeklyBook.author}
+              description={weeklyBook.description}
+              pdfUrl={weeklyBook.pdf_url}
+            />
+          )}
           <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Meus Hábitos</h2>
+              <AddHabitDialog onHabitAdded={refetchCustomHabits} />
+            </div>
             <HabitList
-              habits={habits}
+              defaultHabits={defaultHabits}
               customHabits={customHabits}
               onToggleHabit={toggleHabit}
-              onDeleteHabit={deleteHabit}
             />
-            
-            <AddHabitDialog
-              isOpen={isDialogOpen}
-              onOpenChange={setIsDialogOpen}
-              newHabitTitle={newHabitTitle}
-              onTitleChange={setNewHabitTitle}
-              onAddHabit={addCustomHabit}
-            />
-          </div>
-          
-          <div className="space-y-4">
-            <DailyText />
-            <WeeklyBook />
           </div>
         </div>
       </div>
