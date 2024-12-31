@@ -23,7 +23,8 @@ export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }
     ...customHabits.map(habit => ({ 
       ...habit, 
       isCustom: true,
-      icon: <Plus className="w-6 h-6" />
+      icon: <Plus className="w-6 h-6" />,
+      completedDays: habit.completed_days // Map completed_days to completedDays for consistency
     }))
   ];
 
@@ -63,7 +64,7 @@ export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }
               icon={habit.icon}
               completed={habit.completed}
               progress={habit.progress}
-              completedDays={habit.isCustom ? habit.completed_days : habit.completedDays}
+              completedDays={habit.completedDays}
               onClick={() => onToggleHabit(habit.id, habit.isCustom)}
               onDelete={habit.isCustom ? () => onDeleteHabit(habit.id) : undefined}
               isCustom={habit.isCustom}

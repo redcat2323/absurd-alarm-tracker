@@ -3,6 +3,7 @@ import { AddHabitForm } from "@/components/AddHabitForm";
 import { useHabits } from "@/hooks/useHabits";
 import { useCelebration } from "@/hooks/useCelebration";
 import { CelebrationMessage } from "@/components/CelebrationMessage";
+import { CustomHabit } from "@/types/habits";
 
 interface HabitsSectionProps {
   userId: string;
@@ -13,7 +14,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const { checkAndCelebrate, showCelebration, setShowCelebration } = useCelebration();
 
   const handleToggleHabit = async (id: number, isCustom?: boolean) => {
-    checkAndCelebrate(id, isCustom, habits, customHabits);
+    checkAndCelebrate(id, isCustom, habits, customHabits as CustomHabit[]);
     await toggleHabit(id, isCustom);
   };
 
@@ -30,7 +31,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
       
       <HabitList
         habits={habits}
-        customHabits={customHabits || []}
+        customHabits={customHabits as CustomHabit[]}
         onToggleHabit={handleToggleHabit}
         onDeleteHabit={deleteHabit}
       />
