@@ -12,7 +12,7 @@ import { CustomHabit, DefaultHabit } from "@/types/habits";
 
 const Index = () => {
   const [habits, setHabits] = useState<DefaultHabit[]>([
-    { id: 1, title: "Despertar - 4h59", icon: <Timer className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
+    { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
     { id: 2, title: "Banho Natural", icon: <Droplets className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
     { id: 3, title: "Devocional - Boot Diário", icon: <Sun className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
     { id: 4, title: "Leitura Diária", icon: <Book className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
