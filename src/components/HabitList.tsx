@@ -1,14 +1,33 @@
-import { Sun } from "lucide-react";
+import { Book, Droplets, Moon, Sun, Timer, Plus } from "lucide-react";
 import { HabitCard } from "@/components/HabitCard";
-import { AddHabitDialog } from "@/components/AddHabitDialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { defaultHabits } from "@/data/defaultHabits";
-import { calculateAnnualProgress } from "@/utils/habitUtils";
-import type { Habit } from "@/types/habit";
+
+interface Habit {
+  id: number;
+  title: string;
+  icon: React.ReactNode;
+  completed: boolean;
+  progress: number;
+  completed_days: number;
+}
+
+const defaultHabits: Habit[] = [
+  { id: 1, title: "Despertar - 4h59", icon: <Timer className="w-6 h-6" />, completed: false, progress: 0, completed_days: 0 },
+  { id: 2, title: "Banho Natural", icon: <Droplets className="w-6 h-6" />, completed: false, progress: 0, completed_days: 0 },
+  { id: 3, title: "Devocional - Boot Diário", icon: <Sun className="w-6 h-6" />, completed: false, progress: 0, completed_days: 0 },
+  { id: 4, title: "Leitura Diária", icon: <Book className="w-6 h-6" />, completed: false, progress: 0, completed_days: 0 },
+  { id: 5, title: "Exercício Diário", icon: <Moon className="w-6 h-6" />, completed: false, progress: 0, completed_days: 0 },
+];
 
 export const HabitList = () => {
+  const [newHabitTitle, setNewHabitTitle] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: customHabits = [], isLoading } = useQuery({
@@ -41,6 +60,8 @@ export const HabitList = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
+      setNewHabitTitle("");
+      setIsDialogOpen(false);
       toast.success("Hábito criado com sucesso!");
     },
     onError: (error) => {
@@ -68,28 +89,19 @@ export const HabitList = () => {
 
   const updateHabitMutation = useMutation({
     mutationFn: async (habit: Habit) => {
-      if (habit.id > 5) {
-        const { data, error } = await supabase
-          .from('custom_habits')
-          .update({
-            completed: !habit.completed,
-            completed_days: habit.completed ? habit.completed_days - 1 : habit.completed_days + 1,
-            progress: calculateAnnualProgress(habit.completed ? habit.completed_days - 1 : habit.completed_days + 1),
-          })
-          .eq('id', habit.id)
-          .select()
-          .maybeSingle();
-        
-        if (error) throw error;
-        return data;
-      }
+      const { data, error } = await supabase
+        .from('custom_habits')
+        .update({
+          completed: !habit.completed,
+          completed_days: habit.completed ? habit.completed_days - 1 : habit.completed_days + 1,
+          progress: calculateAnnualProgress(habit.completed ? habit.completed_days - 1 : habit.completed_days + 1),
+        })
+        .eq('id', habit.id)
+        .select()
+        .single();
       
-      return {
-        ...habit,
-        completed: !habit.completed,
-        completed_days: habit.completed ? habit.completed_days - 1 : habit.completed_days + 1,
-        progress: calculateAnnualProgress(habit.completed ? habit.completed_days - 1 : habit.completed_days + 1),
-      };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['habits'] });
@@ -100,12 +112,49 @@ export const HabitList = () => {
     },
   });
 
+  const calculateAnnualProgress = (completedDays: number) => {
+    const daysInYear = 365;
+    return Math.round((completedDays / daysInYear) * 100);
+  };
+
+  const handleCreateHabit = () => {
+    if (newHabitTitle.trim()) {
+      createHabitMutation.mutate(newHabitTitle.trim());
+    }
+  };
+
   const allHabits = [...defaultHabits, ...customHabits];
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end mb-4">
-        <AddHabitDialog onCreateHabit={(title) => createHabitMutation.mutate(title)} />
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Plus className="w-4 h-4" />
+              Adicionar Hábito
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Novo Hábito</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <Input
+                placeholder="Nome do hábito"
+                value={newHabitTitle}
+                onChange={(e) => setNewHabitTitle(e.target.value)}
+              />
+              <Button 
+                onClick={handleCreateHabit}
+                disabled={!newHabitTitle.trim()}
+                className="w-full"
+              >
+                Criar Hábito
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
       
       {allHabits.map((habit) => {

@@ -16,29 +16,17 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
     e.preventDefault();
     try {
       if (isSignUp) {
-        // Primeiro cria a conta
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { name },
           },
         });
-        if (signUpError) throw signUpError;
-
-        // Em seguida, faz o login automaticamente
-        const { error: signInError, data } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (signInError) throw signInError;
-        
-        const userName = data.user?.user_metadata?.name || "Usuário";
-        onLogin(userName);
-        
+        if (error) throw error;
         toast({
-          title: "Bem-vindo!",
-          description: "Sua conta foi criada com sucesso.",
+          title: "Conta criada com sucesso!",
+          description: "Verifique seu email para confirmar o cadastro.",
         });
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({

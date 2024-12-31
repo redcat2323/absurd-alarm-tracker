@@ -26,8 +26,8 @@ export const HabitCard = ({
   return (
     <Card
       className={cn(
-        "p-6 transition-all hover:shadow-lg cursor-pointer",
-        completed ? "bg-emerald-500/10 border-emerald-500" : "border-muted"
+        "p-6 transition-all hover:shadow-lg",
+        completed ? "border-emerald-500" : "border-muted"
       )}
     >
       <div className="flex items-center justify-between mb-4">
@@ -40,13 +40,13 @@ export const HabitCard = ({
             <Button
               variant="ghost"
               size="icon"
-              className="hover:bg-destructive/10 hover:text-destructive cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
               }}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
-              <Trash2 className="h-5 w-5" />
+              <Trash2 className="w-4 h-4" />
             </Button>
           )}
           {completed ? (
