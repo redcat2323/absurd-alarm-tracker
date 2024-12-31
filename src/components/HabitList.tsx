@@ -1,8 +1,8 @@
 import { HabitCard } from "@/components/HabitCard";
-import { Book, Droplets, Moon, Sun, Timer, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { CustomHabit, DefaultHabit } from "@/types/habits";
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef, memo } from 'react';
+import { useRef, memo, useMemo } from 'react';
 
 interface HabitListProps {
   habits: DefaultHabit[];
