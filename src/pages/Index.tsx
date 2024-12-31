@@ -11,7 +11,6 @@ import { HabitList } from "@/components/HabitList";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Book, Droplets, Moon, Sun } from "lucide-react";
 import { getDayOfYear } from "@/utils/dateUtils";
 
@@ -45,7 +44,6 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Query para buscar hábitos padrão com cache de 5 minutos
   const { data: defaultHabits = [] } = useQuery({
     queryKey: ["defaultHabits", session?.user?.id, formattedDate],
     queryFn: async () => {
@@ -75,10 +73,9 @@ const Index = () => {
         };
       });
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Query para buscar hábitos personalizados com cache de 5 minutos
   const { data: customHabits = [], refetch: refetchCustomHabits } = useQuery({
     queryKey: ["customHabits", session?.user?.id, formattedDate],
     queryFn: async () => {
@@ -93,10 +90,9 @@ const Index = () => {
       
       return data || [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Query para buscar texto diário com cache de 1 hora
   const { data: dailyText } = useQuery({
     queryKey: ["dailyText", formattedDate],
     queryFn: async () => {
@@ -107,10 +103,9 @@ const Index = () => {
         .single();
       return data;
     },
-    staleTime: 60 * 60 * 1000, // 1 hora
+    staleTime: 60 * 60 * 1000,
   });
 
-  // Query para buscar livro semanal com cache de 1 dia
   const { data: weeklyBook } = useQuery({
     queryKey: ["weeklyBook"],
     queryFn: async () => {
@@ -123,7 +118,7 @@ const Index = () => {
         .single();
       return data;
     },
-    staleTime: 24 * 60 * 60 * 1000, // 24 horas
+    staleTime: 24 * 60 * 60 * 1000,
   });
 
   const initializeDefaultHabits = async (userId: string) => {
@@ -301,7 +296,9 @@ const Index = () => {
       <div className="container mx-auto px-4 py-8">
         <Header userName={userName} dayOfYear={dayOfYear} />
         <div className="mt-8 space-y-8">
-          {dailyText && <DailyText text={dailyText.text} />}
+          {dailyText && (
+            <DailyText text={dailyText.text} />
+          )}
           {weeklyBook && (
             <WeeklyBook
               title={weeklyBook.title}
@@ -313,7 +310,7 @@ const Index = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Meus Hábitos</h2>
-              <AddHabitDialog onHabitAdded={() => refetchCustomHabits()} />
+              <AddHabitDialog onHabitAdded={refetchCustomHabits} />
             </div>
             <HabitList
               defaultHabits={defaultHabits}
