@@ -103,9 +103,15 @@ const DailyTextForm = () => {
   };
 
   const formatDate = (dateString: string) => {
-    // Parse the date string to a Date object, considering it as UTC
     const date = parseISO(dateString);
     return format(date, "dd 'de' MMMM 'de' yyyy", {
+      locale: ptBR,
+    });
+  };
+
+  const formatCreatedAt = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, "dd/MM/yyyy HH:mm", {
       locale: ptBR,
     });
   };
@@ -165,9 +171,7 @@ const DailyTextForm = () => {
                     />
                   </TableCell>
                   <TableCell>
-                    {format(new Date(text.created_at), "dd/MM/yyyy HH:mm", {
-                      locale: ptBR,
-                    })}
+                    {formatCreatedAt(text.created_at)}
                   </TableCell>
                 </TableRow>
               ))}
