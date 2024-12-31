@@ -36,6 +36,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: number
+          pdf_url: string | null
           title: string
           week_start: string
         }
@@ -44,6 +45,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          pdf_url?: string | null
           title: string
           week_start: string
         }
@@ -52,6 +54,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: number
+          pdf_url?: string | null
           title?: string
           week_start?: string
         }

@@ -7,17 +7,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { startOfWeek, format } from "date-fns";
+import { FileUp, Loader2 } from "lucide-react";
 
 const WeeklyBookForm = () => {
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("");
   const [bookDescription, setBookDescription] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [weekStartDate, setWeekStartDate] = useState(() => {
     const today = new Date();
     const sunday = startOfWeek(today, { weekStartsOn: 0 });
     return format(sunday, 'yyyy-MM-dd');
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,10 +35,12 @@ const WeeklyBookForm = () => {
         setBookTitle(data.title);
         setBookAuthor(data.author);
         setBookDescription(data.description || "");
+        setCurrentPdfUrl(data.pdf_url);
       } else {
         setBookTitle("");
         setBookAuthor("");
         setBookDescription("");
+        setCurrentPdfUrl(null);
       }
     };
 
@@ -48,11 +53,53 @@ const WeeklyBookForm = () => {
     setWeekStartDate(format(sunday, 'yyyy-MM-dd'));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.type === 'application/pdf') {
+        setPdfFile(file);
+      } else {
+        toast({
+          title: "Erro",
+          description: "Por favor, selecione um arquivo PDF.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const uploadPdf = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('book_files')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
+      throw new Error('Erro ao fazer upload do arquivo');
+    }
+
+    const { data } = supabase.storage
+      .from('book_files')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const handleWeeklyBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      let pdfUrl = currentPdfUrl;
+      
+      if (pdfFile) {
+        pdfUrl = await uploadPdf(pdfFile);
+      }
+
       const { data: existingBook } = await supabase
         .from("weekly_books")
         .select()
@@ -68,6 +115,7 @@ const WeeklyBookForm = () => {
             title: bookTitle,
             author: bookAuthor,
             description: bookDescription,
+            pdf_url: pdfUrl,
           })
           .eq("week_start", weekStartDate);
         error = updateError;
@@ -79,6 +127,7 @@ const WeeklyBookForm = () => {
             author: bookAuthor,
             description: bookDescription,
             week_start: weekStartDate,
+            pdf_url: pdfUrl,
           });
         error = insertError;
       }
@@ -95,6 +144,7 @@ const WeeklyBookForm = () => {
           title: "Sucesso",
           description: "Livro da semana atualizado com sucesso!",
         });
+        setPdfFile(null);
       }
     } catch (error) {
       console.error("Error in weekly book submission:", error);
@@ -151,8 +201,39 @@ const WeeklyBookForm = () => {
             placeholder="Descrição do livro..."
           />
         </div>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Salvando..." : "Salvar Livro da Semana"}
+        <div>
+          <Label htmlFor="pdf-file">PDF do Livro</Label>
+          <div className="flex items-center gap-4">
+            <Input
+              id="pdf-file"
+              type="file"
+              accept=".pdf"
+              onChange={handleFileChange}
+              className="flex-1"
+            />
+            {currentPdfUrl && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.open(currentPdfUrl, '_blank')}
+              >
+                Ver PDF Atual
+              </Button>
+            )}
+          </div>
+        </div>
+        <Button type="submit" disabled={isSubmitting} className="w-full">
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Salvando...
+            </>
+          ) : (
+            <>
+              <FileUp className="mr-2 h-4 w-4" />
+              Salvar Livro da Semana
+            </>
+          )}
         </Button>
       </form>
     </Card>

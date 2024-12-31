@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Book } from "lucide-react";
+import { Book, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { Button } from "@/components/ui/button";
 
 type WeeklyBook = Database["public"]["Tables"]["weekly_books"]["Row"];
 
@@ -44,13 +45,23 @@ export const WeeklyBook = () => {
             <p className="text-muted-foreground text-lg italic mb-4">por {book.author}</p>
             {book.description && (
               <div 
-                className="text-foreground leading-relaxed"
+                className="text-foreground leading-relaxed mb-4"
                 style={{
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word'
                 }}
                 dangerouslySetInnerHTML={{ __html: book.description }}
               />
+            )}
+            {book.pdf_url && (
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => window.open(book.pdf_url!, '_blank')}
+              >
+                <FileText className="w-4 h-4" />
+                Baixar PDF
+              </Button>
             )}
           </div>
         </div>
