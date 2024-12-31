@@ -60,7 +60,7 @@ export const HabitCard = ({
       </div>
       <Progress value={progress} className="h-2" />
       <p className="text-sm text-muted-foreground mt-2 mb-4">
-        {progress}% completo • {completedDays}/{totalDaysInYear} dias
+        {progress.toFixed(2)}% completo • {completedDays}/{totalDaysInYear} dias
       </p>
       <Button 
         variant={completed ? "outline" : "default"}

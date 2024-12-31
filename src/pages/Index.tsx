@@ -125,7 +125,7 @@ const Index = () => {
 
   const calculateAnnualProgress = (completedDays: number) => {
     const daysInYear = getDaysInCurrentYear();
-    return Math.round((completedDays / daysInYear) * 100);
+    return Number(((completedDays / daysInYear) * 100).toFixed(2));
   };
 
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
