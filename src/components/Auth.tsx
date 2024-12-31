@@ -26,8 +26,9 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
         if (error) throw error;
         toast({
           title: "Conta criada com sucesso!",
-          description: "Verifique seu email para confirmar o cadastro.",
+          description: "Você já pode fazer login.",
         });
+        setIsSignUp(false); // Muda para a tela de login
       } else {
         const { error, data } = await supabase.auth.signInWithPassword({
           email,
