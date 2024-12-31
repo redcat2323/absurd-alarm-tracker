@@ -6,18 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { startOfWeek, format } from "date-fns";
 
 const WeeklyBookForm = () => {
   const [bookTitle, setBookTitle] = useState("");
   const [bookAuthor, setBookAuthor] = useState("");
   const [bookDescription, setBookDescription] = useState("");
-  const [weekStartDate, setWeekStartDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [weekStartDate, setWeekStartDate] = useState(() => {
+    const today = new Date();
+    const sunday = startOfWeek(today, { weekStartsOn: 0 });
+    return format(sunday, 'yyyy-MM-dd');
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  // Carregar livro existente quando a data for alterada
   useEffect(() => {
     const loadExistingBook = async () => {
       const { data } = await supabase
@@ -40,12 +42,17 @@ const WeeklyBookForm = () => {
     loadExistingBook();
   }, [weekStartDate]);
 
+  const handleWeekStartChange = (date: string) => {
+    const selectedDate = new Date(date);
+    const sunday = startOfWeek(selectedDate, { weekStartsOn: 0 });
+    setWeekStartDate(format(sunday, 'yyyy-MM-dd'));
+  };
+
   const handleWeeklyBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Primeiro, verifica se já existe um livro para esta semana
       const { data: existingBook } = await supabase
         .from("weekly_books")
         .select()
@@ -55,7 +62,6 @@ const WeeklyBookForm = () => {
       let error;
       
       if (existingBook) {
-        // Se existe, atualiza o registro
         const { error: updateError } = await supabase
           .from("weekly_books")
           .update({
@@ -66,7 +72,6 @@ const WeeklyBookForm = () => {
           .eq("week_start", weekStartDate);
         error = updateError;
       } else {
-        // Se não existe, insere um novo
         const { error: insertError } = await supabase
           .from("weekly_books")
           .insert({
@@ -108,12 +113,12 @@ const WeeklyBookForm = () => {
       <h2 className="text-xl font-semibold mb-4">Livro da Semana</h2>
       <form onSubmit={handleWeeklyBookSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="week-start">Data de Início da Semana</Label>
+          <Label htmlFor="week-start">Data de Início da Semana (Domingo)</Label>
           <Input
             id="week-start"
             type="date"
             value={weekStartDate}
-            onChange={(e) => setWeekStartDate(e.target.value)}
+            onChange={(e) => handleWeekStartChange(e.target.value)}
             className="mb-4"
             required
           />

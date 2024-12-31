@@ -1,5 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
 import { Button } from './button';
 import {
   Bold,
@@ -10,6 +11,7 @@ import {
   Heading2,
   Undo,
   Redo,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -20,7 +22,15 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: true,
+        HTMLAttributes: {
+          class: 'text-primary underline',
+        },
+      }),
+    ],
     content: value,
     editorProps: {
       attributes: {
@@ -31,6 +41,13 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       onChange(editor.getHTML());
     },
   });
+
+  const setLink = () => {
+    const url = window.prompt('URL:');
+    if (url) {
+      editor?.chain().focus().setLink({ href: url }).run();
+    }
+  };
 
   if (!editor) {
     return null;
@@ -86,6 +103,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           className={editor.isActive('blockquote') ? 'bg-muted' : ''}
         >
           <Quote className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={setLink}
+          className={editor.isActive('link') ? 'bg-muted' : ''}
+        >
+          <LinkIcon className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
