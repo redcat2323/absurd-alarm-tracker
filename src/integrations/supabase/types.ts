@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      custom_habits: {
+        Row: {
+          completed: boolean | null
+          completed_days: number | null
+          created_at: string
+          id: number
+          progress: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_days?: number | null
+          created_at?: string
+          id?: number
+          progress?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_days?: number | null
+          created_at?: string
+          id?: number
+          progress?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_texts: {
         Row: {
           created_at: string
