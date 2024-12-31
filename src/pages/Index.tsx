@@ -40,7 +40,7 @@ const Index = () => {
         const completion = completions?.find(c => c.habit_id === habit.id);
         return {
           ...habit,
-          completed: false,
+          completed: completion?.completed || false,
           completedDays: completion?.completed_days || 0,
           progress: completion?.progress || 0,
         };
@@ -188,6 +188,7 @@ const Index = () => {
           .upsert({
             user_id: user.id,
             habit_id: id,
+            completed: !habitToUpdate.completed,
             completed_days: newCompletedDays,
             progress: newProgress
           }, {
@@ -309,7 +310,6 @@ const Index = () => {
               title: "Feliz Ano Novo! 🎉",
               description: "Seus hábitos foram resetados para o novo ano.",
             });
-            // Recarrega os hábitos após o reset
             await initializeDefaultHabits(user.id);
             await fetchCustomHabits();
           }

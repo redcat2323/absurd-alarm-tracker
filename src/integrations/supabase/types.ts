@@ -62,6 +62,7 @@ export type Database = {
       }
       default_habit_completions: {
         Row: {
+          completed: boolean | null
           completed_days: number | null
           created_at: string
           habit_id: number
@@ -70,6 +71,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          completed?: boolean | null
           completed_days?: number | null
           created_at?: string
           habit_id: number
@@ -78,6 +80,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          completed?: boolean | null
           completed_days?: number | null
           created_at?: string
           habit_id?: number
