@@ -56,20 +56,6 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
         <p className="text-xl md:text-2xl mb-6 text-muted-foreground">
           Prepare-se para a jornada mais desafiadora e transformadora da sua vida
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="p-4 rounded-lg bg-card">
-            <h3 className="font-bold mb-2">Desafio Diário</h3>
-            <p className="text-muted-foreground">Enfrente seus limites todos os dias com hábitos transformadores</p>
-          </div>
-          <div className="p-4 rounded-lg bg-card">
-            <h3 className="font-bold mb-2">Comunidade</h3>
-            <p className="text-muted-foreground">Junte-se a pessoas determinadas a mudar suas vidas</p>
-          </div>
-          <div className="p-4 rounded-lg bg-card">
-            <h3 className="font-bold mb-2">Transformação</h3>
-            <p className="text-muted-foreground">Descubra sua melhor versão através do desconforto planejado</p>
-          </div>
-        </div>
       </div>
 
       <Card className="p-6 w-full max-w-md mx-auto">
