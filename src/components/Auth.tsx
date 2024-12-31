@@ -51,7 +51,7 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
       <div className="max-w-3xl w-full text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">
-          O Pior Ano da Sua Vida
+          O Pior Ano<br className="md:hidden" /> da Sua Vida
         </h1>
         <p className="text-xl md:text-2xl mb-6 text-muted-foreground">
           Prepare-se para a jornada mais desafiadora e transformadora da sua vida
