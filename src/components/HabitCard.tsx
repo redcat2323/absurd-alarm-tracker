@@ -26,9 +26,10 @@ export const HabitCard = ({
   return (
     <Card
       className={cn(
-        "p-6 transition-all hover:shadow-lg",
+        "p-6 transition-all hover:shadow-lg cursor-pointer",
         completed ? "bg-emerald-500/10 border-emerald-500" : "border-muted"
       )}
+      onClick={onClick}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -66,7 +67,10 @@ export const HabitCard = ({
           "w-full",
           completed && "border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
         )}
-        onClick={onClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
       >
         {completed ? "Desfazer" : "Marcar como realizado"}
       </Button>
