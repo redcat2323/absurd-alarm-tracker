@@ -12,6 +12,8 @@ import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Book, Droplets, Moon, Sun } from "lucide-react";
+import { getDayOfYear } from "@/utils/dateUtils";
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);
@@ -21,6 +23,7 @@ const Index = () => {
   const queryClient = useQueryClient();
   const today = new Date();
   const formattedDate = format(today, "yyyy-MM-dd");
+  const dayOfYear = getDayOfYear(today);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -56,10 +59,10 @@ const Index = () => {
         .lte("created_at", `${formattedDate}T23:59:59`);
 
       const defaultHabitsList = [
-        { id: 1, title: "Ler a Bíblia" },
-        { id: 2, title: "Orar" },
-        { id: 3, title: "Exercitar" },
-        { id: 4, title: "Estudar" },
+        { id: 1, title: "Ler a Bíblia", icon: <Book className="w-6 h-6" /> },
+        { id: 2, title: "Orar", icon: <Sun className="w-6 h-6" /> },
+        { id: 3, title: "Exercitar", icon: <Droplets className="w-6 h-6" /> },
+        { id: 4, title: "Estudar", icon: <Moon className="w-6 h-6" /> },
       ];
 
       return defaultHabitsList.map((habit) => {
@@ -145,21 +148,23 @@ const Index = () => {
     }
   };
 
-  const toggleHabit = async (
-    id: number,
-    isCustomHabit: boolean,
-    habitToUpdate: any
-  ) => {
+  const toggleHabit = async (id: number, isCustom?: boolean) => {
     const user = session?.user;
     if (!user) return;
 
     try {
-      if (isCustomHabit) {
-        const newCompletedDays = habitToUpdate.completed
-          ? Math.max(0, (habitToUpdate.completedDays || 0) - 1)
-          : (habitToUpdate.completedDays || 0) + 1;
-        const newProgress = (newCompletedDays / 365) * 100;
+      const habitToUpdate = isCustom 
+        ? customHabits?.find(h => h.id === id)
+        : defaultHabits?.find(h => h.id === id);
 
+      if (!habitToUpdate) return;
+
+      const newCompletedDays = habitToUpdate.completed
+        ? Math.max(0, (habitToUpdate.completedDays || habitToUpdate.completed_days || 0) - 1)
+        : (habitToUpdate.completedDays || habitToUpdate.completed_days || 0) + 1;
+      const newProgress = (newCompletedDays / 365) * 100;
+
+      if (isCustom) {
         await supabase
           .from("custom_habits")
           .update({
@@ -171,11 +176,6 @@ const Index = () => {
 
         refetchCustomHabits();
       } else {
-        const newCompletedDays = habitToUpdate.completed
-          ? Math.max(0, (habitToUpdate.completedDays || 0) - 1)
-          : (habitToUpdate.completedDays || 0) + 1;
-        const newProgress = (newCompletedDays / 365) * 100;
-
         await supabase
           .from("default_habit_completions")
           .upsert({
@@ -202,6 +202,29 @@ const Index = () => {
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o hábito.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteHabit = async (id: number) => {
+    try {
+      await supabase
+        .from("custom_habits")
+        .delete()
+        .eq("id", id);
+      
+      refetchCustomHabits();
+      
+      toast({
+        title: "Sucesso",
+        description: "Hábito removido com sucesso.",
+      });
+    } catch (error) {
+      console.error("Error deleting habit:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o hábito.",
         variant: "destructive",
       });
     }
@@ -276,7 +299,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <AdminNav />
       <div className="container mx-auto px-4 py-8">
-        <Header userName={userName} />
+        <Header userName={userName} dayOfYear={dayOfYear} />
         <div className="mt-8 space-y-8">
           {dailyText && <DailyText text={dailyText.text} />}
           {weeklyBook && (
@@ -290,12 +313,13 @@ const Index = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Meus Hábitos</h2>
-              <AddHabitDialog onHabitAdded={refetchCustomHabits} />
+              <AddHabitDialog onHabitAdded={() => refetchCustomHabits()} />
             </div>
             <HabitList
               defaultHabits={defaultHabits}
               customHabits={customHabits}
               onToggleHabit={toggleHabit}
+              onDeleteHabit={deleteHabit}
             />
           </div>
         </div>
