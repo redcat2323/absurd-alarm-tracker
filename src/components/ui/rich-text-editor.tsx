@@ -43,10 +43,19 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   });
 
   const setLink = () => {
-    const url = window.prompt('URL:');
-    if (url) {
-      editor?.chain().focus().setLink({ href: url }).run();
+    const previousUrl = editor?.getAttributes('link').href;
+    const url = window.prompt('URL:', previousUrl);
+    
+    if (url === null) {
+      return;
     }
+
+    if (url === '') {
+      editor?.chain().focus().unsetLink().run();
+      return;
+    }
+
+    editor?.chain().focus().setLink({ href: url }).run();
   };
 
   if (!editor) {
