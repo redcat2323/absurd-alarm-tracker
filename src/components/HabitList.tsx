@@ -1,18 +1,9 @@
 import { HabitCard } from "@/components/HabitCard";
 import { Book, Droplets, Moon, Sun, Timer, Plus } from "lucide-react";
-import { CustomHabit } from "@/types/habits";
-
-interface Habit {
-  id: number;
-  title: string;
-  icon: React.ReactNode;
-  completed: boolean;
-  progress: number;
-  completedDays: number;
-}
+import { CustomHabit, DefaultHabit } from "@/types/habits";
 
 interface HabitListProps {
-  habits: Habit[];
+  habits: DefaultHabit[];
   customHabits: CustomHabit[];
   onToggleHabit: (id: number, isCustom?: boolean) => Promise<void>;
   onDeleteHabit: (id: number) => Promise<void>;
