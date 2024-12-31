@@ -70,7 +70,7 @@ export const HabitCard = ({
         )}
         onClick={onClick}
       >
-        {completed ? "Concluída" : "Marcar como realizado"}
+        {completed ? "Concluída" : "Marcar como concluída"}
       </Button>
     </Card>
   );
