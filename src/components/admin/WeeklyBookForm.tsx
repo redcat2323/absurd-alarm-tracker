@@ -14,32 +14,46 @@ const WeeklyBookForm = () => {
   const [weekStartDate, setWeekStartDate] = useState(
     new Date().toISOString().split("T")[0]
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleWeeklyBookSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const { error } = await supabase.from("weekly_books").upsert({
-      title: bookTitle,
-      author: bookAuthor,
-      description: bookDescription,
-      week_start: weekStartDate,
-    });
+    try {
+      const { error } = await supabase.from("weekly_books").upsert({
+        title: bookTitle,
+        author: bookAuthor,
+        description: bookDescription,
+        week_start: weekStartDate,
+      });
 
-    if (error) {
+      if (error) {
+        console.error("Error saving weekly book:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível salvar o livro da semana. Por favor, tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Livro da semana atualizado com sucesso!",
+        });
+        setBookTitle("");
+        setBookAuthor("");
+        setBookDescription("");
+      }
+    } catch (error) {
+      console.error("Error in weekly book submission:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível salvar o livro da semana.",
+        description: "Ocorreu um erro ao salvar o livro. Por favor, tente novamente.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Sucesso",
-        description: "Livro da semana atualizado com sucesso!",
-      });
-      setBookTitle("");
-      setBookAuthor("");
-      setBookDescription("");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -55,6 +69,7 @@ const WeeklyBookForm = () => {
             value={weekStartDate}
             onChange={(e) => setWeekStartDate(e.target.value)}
             className="mb-4"
+            required
           />
         </div>
         <div>
@@ -64,6 +79,7 @@ const WeeklyBookForm = () => {
             value={bookTitle}
             onChange={(e) => setBookTitle(e.target.value)}
             placeholder="Título do livro"
+            required
           />
         </div>
         <div>
@@ -73,6 +89,7 @@ const WeeklyBookForm = () => {
             value={bookAuthor}
             onChange={(e) => setBookAuthor(e.target.value)}
             placeholder="Autor do livro"
+            required
           />
         </div>
         <div>
@@ -83,7 +100,9 @@ const WeeklyBookForm = () => {
             placeholder="Descrição do livro..."
           />
         </div>
-        <Button type="submit">Salvar Livro da Semana</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Salvando..." : "Salvar Livro da Semana"}
+        </Button>
       </form>
     </Card>
   );
