@@ -191,7 +191,6 @@ const Index = () => {
         completed: false
       })));
       
-      // Reset custom habits
       customHabits.forEach(async (habit) => {
         try {
           await supabase
