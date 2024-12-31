@@ -16,6 +16,10 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     await toggleHabit(id, isCustom);
   };
 
+  const handleHabitAdded = async () => {
+    await refetchCustomHabits();
+  };
+
   return (
     <div className="space-y-4">
       <HabitList
@@ -27,7 +31,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
       
       <AddHabitForm 
         userId={userId}
-        onHabitAdded={refetchCustomHabits}
+        onHabitAdded={handleHabitAdded}
       />
     </div>
   );
