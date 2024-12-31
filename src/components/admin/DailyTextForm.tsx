@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type DailyText = {
@@ -98,8 +98,16 @@ const DailyTextForm = () => {
         title: "Sucesso",
         description: "Texto diário atualizado com sucesso!",
       });
-      fetchDailyTexts(); // Atualiza a lista após salvar
+      fetchDailyTexts();
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    // Parse the date string to a Date object, considering it as UTC
+    const date = parseISO(dateString);
+    return format(date, "dd 'de' MMMM 'de' yyyy", {
+      locale: ptBR,
+    });
   };
 
   return (
@@ -144,9 +152,7 @@ const DailyTextForm = () => {
               {dailyTexts.map((text) => (
                 <TableRow key={text.id}>
                   <TableCell>
-                    {format(new Date(text.date), "dd 'de' MMMM 'de' yyyy", {
-                      locale: ptBR,
-                    })}
+                    {formatDate(text.date)}
                   </TableCell>
                   <TableCell className="max-w-md">
                     <div 
