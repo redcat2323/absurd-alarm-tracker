@@ -1,34 +1,16 @@
-import { Book, Droplets, Moon, Sun, Timer, Plus } from "lucide-react";
-import { HabitCard } from "@/components/HabitCard";
+import { Book, Droplets, Moon, Sun, Timer } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Auth } from "@/components/Auth";
 import { DailyText } from "@/components/DailyText";
 import { WeeklyBook } from "@/components/WeeklyBook";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-
-interface Habit {
-  id: number;
-  title: string;
-  icon: React.ReactNode;
-  completed: boolean;
-  progress: number;
-  completedDays: number;
-}
-
-interface CustomHabit {
-  id: number;
-  title: string;
-  completed: boolean;
-  progress: number;
-  completed_days: number;
-}
+import { HabitList } from "@/components/HabitList";
+import { AddHabitDialog } from "@/components/AddHabitDialog";
+import { CustomHabit, DefaultHabit } from "@/types/habits";
 
 const Index = () => {
-  const [habits, setHabits] = useState<Habit[]>([
+  const [habits, setHabits] = useState<DefaultHabit[]>([
     { id: 1, title: "Despertar - 4h59", icon: <Timer className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
     { id: 2, title: "Banho Natural", icon: <Droplets className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
     { id: 3, title: "Devocional - Boot Diário", icon: <Sun className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
@@ -245,48 +227,19 @@ const Index = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            {habits.map((habit) => (
-              <HabitCard
-                key={habit.id}
-                title={habit.title}
-                icon={habit.icon}
-                completed={habit.completed}
-                progress={habit.progress}
-                onClick={() => toggleHabit(habit.id)}
-              />
-            ))}
+            <HabitList
+              habits={habits}
+              customHabits={customHabits}
+              onToggleHabit={toggleHabit}
+            />
             
-            {customHabits.map((habit) => (
-              <HabitCard
-                key={`custom-${habit.id}`}
-                title={habit.title}
-                icon={<Plus className="w-6 h-6" />}
-                completed={habit.completed}
-                progress={habit.progress}
-                onClick={() => toggleHabit(habit.id, true)}
-              />
-            ))}
-
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full">Adicionar Hábito Personalizado</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Novo Hábito Personalizado</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Input
-                    placeholder="Nome do hábito"
-                    value={newHabitTitle}
-                    onChange={(e) => setNewHabitTitle(e.target.value)}
-                  />
-                  <Button onClick={addCustomHabit} className="w-full">
-                    Adicionar
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <AddHabitDialog
+              isOpen={isDialogOpen}
+              onOpenChange={setIsDialogOpen}
+              newHabitTitle={newHabitTitle}
+              onTitleChange={setNewHabitTitle}
+              onAddHabit={addCustomHabit}
+            />
           </div>
           
           <div className="space-y-4">
