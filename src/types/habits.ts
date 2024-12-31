@@ -16,7 +16,7 @@ export interface DefaultHabit {
   icon: ReactNode;
   completed: boolean;
   progress: number;
-  completedDays: number;
+  completedDays: number;  // Changed from completed_days to match the Habit interface
 }
 
 export interface DefaultHabitCompletion {

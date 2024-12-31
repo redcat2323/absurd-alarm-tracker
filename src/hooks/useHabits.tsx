@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -18,20 +18,22 @@ export const useHabits = (userId: string | undefined) => {
   const queryClient = useQueryClient();
   const [habits, setHabits] = useState<DefaultHabit[]>([]);
 
+  // Fetch default habits with caching
   const { data: defaultHabitCompletions } = useQuery({
     queryKey: ['defaultHabitCompletions', userId],
     queryFn: async () => {
       if (!userId) return [];
       const { data } = await supabase
         .from('default_habit_completions')
-        .select('habit_id, completed, completed_days, progress')
+        .select('*')
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 15 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     enabled: !!userId,
   });
 
+  // Fetch custom habits with caching
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
     queryKey: ['customHabits', userId],
     queryFn: async () => {
@@ -42,7 +44,7 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 15 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     enabled: !!userId,
   });
 
@@ -61,12 +63,12 @@ export const useHabits = (userId: string | undefined) => {
     }
   }, [defaultHabitCompletions]);
 
-  const calculateAnnualProgress = useCallback((completedDays: number) => {
+  const calculateAnnualProgress = (completedDays: number) => {
     const daysInYear = getDaysInCurrentYear();
     return Number(((completedDays / daysInYear) * 100).toFixed(2));
-  }, []);
+  };
 
-  const toggleHabit = useCallback(async (id: number, isCustom: boolean = false) => {
+  const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
 
     if (isCustom) {
@@ -90,16 +92,6 @@ export const useHabits = (userId: string | undefined) => {
           .eq('id', id);
 
         if (error) throw error;
-        
-        queryClient.setQueryData(['customHabits', userId], (old: any) => 
-          old?.map((h: any) => h.id === id ? {
-            ...h,
-            completed: !habitToUpdate.completed,
-            completed_days: newCompletedDays,
-            progress: newProgress
-          } : h)
-        );
-
         await refetchCustomHabits();
 
         toast({
@@ -137,15 +129,7 @@ export const useHabits = (userId: string | undefined) => {
           });
 
         if (error) throw error;
-
-        queryClient.setQueryData(['defaultHabitCompletions', userId], (old: any) => 
-          old?.map((h: any) => h.habit_id === id ? {
-            ...h,
-            completed: !habitToUpdate.completed,
-            completed_days: newCompletedDays,
-            progress: newProgress
-          } : h)
-        );
+        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
 
         toast({
           title: "Hábito atualizado!",
@@ -159,9 +143,9 @@ export const useHabits = (userId: string | undefined) => {
         });
       }
     }
-  }, [userId, habits, customHabits, calculateAnnualProgress, queryClient, refetchCustomHabits]);
+  };
 
-  const deleteHabit = useCallback(async (id: number) => {
+  const deleteHabit = async (id: number) => {
     try {
       const { error } = await supabase
         .from('custom_habits')
@@ -170,9 +154,7 @@ export const useHabits = (userId: string | undefined) => {
       
       if (error) throw error;
       
-      queryClient.setQueryData(['customHabits', userId], (old: any) => 
-        old?.filter((h: any) => h.id !== id)
-      );
+      await refetchCustomHabits();
       
       toast({
         title: "Hábito removido",
@@ -185,11 +167,11 @@ export const useHabits = (userId: string | undefined) => {
         variant: "destructive",
       });
     }
-  }, [userId, queryClient]);
+  };
 
   return {
     habits,
-    customHabits: customHabits as CustomHabit[],
+    customHabits,
     toggleHabit,
     deleteHabit,
     refetchCustomHabits
