@@ -55,7 +55,7 @@ export const useHabits = (userId: string | undefined) => {
         return {
           ...habit,
           completed: completion?.completed || false,
-          completed_days: completion?.completed_days || 0,
+          completedDays: completion?.completed_days || 0,
           progress: completion?.progress || 0,
         };
       });
@@ -110,8 +110,8 @@ export const useHabits = (userId: string | undefined) => {
       if (!habitToUpdate) return;
 
       const newCompletedDays = habitToUpdate.completed ? 
-        habitToUpdate.completed_days - 1 : 
-        habitToUpdate.completed_days + 1;
+        habitToUpdate.completedDays - 1 : 
+        habitToUpdate.completedDays + 1;
       
       const newProgress = calculateAnnualProgress(newCompletedDays);
 
