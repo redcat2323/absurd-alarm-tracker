@@ -28,6 +28,7 @@ export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }
           icon={habit.icon}
           completed={habit.completed}
           progress={habit.progress}
+          completedDays={habit.completedDays}
           onClick={() => onToggleHabit(habit.id)}
         />
       ))}
@@ -39,6 +40,7 @@ export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }
           icon={<Plus className="w-6 h-6" />}
           completed={habit.completed}
           progress={habit.progress}
+          completedDays={habit.completed_days || 0}
           onClick={() => onToggleHabit(habit.id, true)}
           onDelete={() => onDeleteHabit(habit.id)}
           isCustom

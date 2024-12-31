@@ -9,6 +9,7 @@ interface HabitCardProps {
   icon: React.ReactNode;
   completed: boolean;
   progress: number;
+  completedDays: number;
   onClick: () => void;
   onDelete?: () => void;
   isCustom?: boolean;
@@ -19,6 +20,7 @@ export const HabitCard = ({
   icon, 
   completed, 
   progress, 
+  completedDays,
   onClick,
   onDelete,
   isCustom 
@@ -55,7 +57,7 @@ export const HabitCard = ({
       </div>
       <Progress value={progress} className="h-2" />
       <p className="text-sm text-muted-foreground mt-2 mb-4">
-        {progress}% completo
+        {progress}% completo • {completedDays}/365 dias
       </p>
       <Button 
         variant={completed ? "outline" : "default"}
