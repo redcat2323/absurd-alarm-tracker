@@ -1,4 +1,4 @@
-import { Book, Droplets, Moon, Sun, Timer } from "lucide-react";
+import { Book, Droplets, Moon, Sun, Timer, Plus } from "lucide-react";
 import { HabitCard } from "@/components/HabitCard";
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
@@ -6,6 +6,9 @@ import { Auth } from "@/components/Auth";
 import { DailyText } from "@/components/DailyText";
 import { WeeklyBook } from "@/components/WeeklyBook";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface Habit {
   id: number;
@@ -14,6 +17,14 @@ interface Habit {
   completed: boolean;
   progress: number;
   completedDays: number;
+}
+
+interface CustomHabit {
+  id: number;
+  title: string;
+  completed: boolean;
+  progress: number;
+  completed_days: number;
 }
 
 const Index = () => {
@@ -25,9 +36,12 @@ const Index = () => {
     { id: 5, title: "Exercício Diário", icon: <Moon className="w-6 h-6" />, completed: false, progress: 0, completedDays: 0 },
   ]);
 
+  const [customHabits, setCustomHabits] = useState<CustomHabit[]>([]);
+  const [newHabitTitle, setNewHabitTitle] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState("");
   const [dayOfYear, setDayOfYear] = useState(0);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     const calculateDayOfYear = () => {
@@ -40,28 +54,84 @@ const Index = () => {
     };
 
     calculateDayOfYear();
+    fetchCustomHabits();
   }, []);
+
+  const fetchCustomHabits = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('custom_habits')
+        .select('*');
+      
+      if (error) throw error;
+      
+      setCustomHabits(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar hábitos personalizados",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const calculateAnnualProgress = (completedDays: number) => {
     const daysInYear = 365;
     return Math.round((completedDays / daysInYear) * 100);
   };
 
-  const toggleHabit = (id: number) => {
-    setHabits(habits.map(habit => {
-      if (habit.id === id) {
-        const newCompletedDays = habit.completed ? habit.completedDays - 1 : habit.completedDays + 1;
-        const newProgress = calculateAnnualProgress(newCompletedDays);
-        
-        return {
-          ...habit,
-          completed: !habit.completed,
-          completedDays: newCompletedDays,
-          progress: newProgress,
-        };
-      }
-      return habit;
-    }));
+  const toggleHabit = (id: number, isCustom: boolean = false) => {
+    if (isCustom) {
+      setCustomHabits(customHabits.map(async (habit) => {
+        if (habit.id === id) {
+          const newCompletedDays = habit.completed ? habit.completed_days - 1 : habit.completed_days + 1;
+          const newProgress = calculateAnnualProgress(newCompletedDays);
+          
+          try {
+            const { error } = await supabase
+              .from('custom_habits')
+              .update({
+                completed: !habit.completed,
+                completed_days: newCompletedDays,
+                progress: newProgress
+              })
+              .eq('id', id);
+            
+            if (error) throw error;
+            
+            return {
+              ...habit,
+              completed: !habit.completed,
+              completed_days: newCompletedDays,
+              progress: newProgress,
+            };
+          } catch (error: any) {
+            toast({
+              title: "Erro ao atualizar hábito",
+              description: error.message,
+              variant: "destructive",
+            });
+            return habit;
+          }
+        }
+        return habit;
+      }));
+    } else {
+      setHabits(habits.map(habit => {
+        if (habit.id === id) {
+          const newCompletedDays = habit.completed ? habit.completedDays - 1 : habit.completedDays + 1;
+          const newProgress = calculateAnnualProgress(newCompletedDays);
+          
+          return {
+            ...habit,
+            completed: !habit.completed,
+            completedDays: newCompletedDays,
+            progress: newProgress,
+          };
+        }
+        return habit;
+      }));
+    }
 
     toast({
       title: "Hábito atualizado!",
@@ -69,9 +139,67 @@ const Index = () => {
     });
   };
 
+  const addCustomHabit = async () => {
+    if (!newHabitTitle.trim()) {
+      toast({
+        title: "Erro",
+        description: "O título do hábito não pode estar vazio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('custom_habits')
+        .insert([
+          {
+            title: newHabitTitle,
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      if (data) {
+        setCustomHabits([...customHabits, data[0]]);
+        setNewHabitTitle("");
+        setIsDialogOpen(false);
+        toast({
+          title: "Sucesso!",
+          description: "Hábito personalizado criado com sucesso.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar hábito",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     const resetHabits = () => {
       setHabits(habits.map(habit => ({
+        ...habit,
+        completed: false
+      })));
+      
+      // Reset custom habits
+      customHabits.forEach(async (habit) => {
+        try {
+          await supabase
+            .from('custom_habits')
+            .update({ completed: false })
+            .eq('id', habit.id);
+        } catch (error) {
+          console.error('Error resetting custom habit:', error);
+        }
+      });
+      
+      setCustomHabits(customHabits.map(habit => ({
         ...habit,
         completed: false
       })));
@@ -86,11 +214,12 @@ const Index = () => {
     const resetTimer = setTimeout(resetHabits, timeUntilReset);
 
     return () => clearTimeout(resetTimer);
-  }, [habits]);
+  }, [habits, customHabits]);
 
   const handleLogin = (name: string) => {
     setIsAuthenticated(true);
     setUserName(name);
+    fetchCustomHabits();
   };
 
   if (!isAuthenticated) {
@@ -123,6 +252,38 @@ const Index = () => {
                 onClick={() => toggleHabit(habit.id)}
               />
             ))}
+            
+            {customHabits.map((habit) => (
+              <HabitCard
+                key={`custom-${habit.id}`}
+                title={habit.title}
+                icon={<Plus className="w-6 h-6" />}
+                completed={habit.completed}
+                progress={habit.progress}
+                onClick={() => toggleHabit(habit.id, true)}
+              />
+            ))}
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full">Adicionar Hábito Personalizado</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Novo Hábito Personalizado</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Nome do hábito"
+                    value={newHabitTitle}
+                    onChange={(e) => setNewHabitTitle(e.target.value)}
+                  />
+                  <Button onClick={addCustomHabit} className="w-full">
+                    Adicionar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           
           <div className="space-y-4">
