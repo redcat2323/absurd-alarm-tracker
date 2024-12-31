@@ -243,7 +243,10 @@ const Index = () => {
     <div className="min-h-screen bg-background p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">O Pior Ano da Sua Vida</h1>
+          <h1 className="text-4xl font-bold mb-2">
+            <span className="inline md:inline-block">O Pior Ano</span>{" "}
+            <span className="inline md:inline-block">da Sua Vida</span>
+          </h1>
           <p className="text-muted-foreground">
             Bem-vindo, {userName}! | Dia {dayOfYear} do ano
           </p>
