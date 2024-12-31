@@ -15,9 +15,10 @@ interface HabitListProps {
   habits: Habit[];
   customHabits: CustomHabit[];
   onToggleHabit: (id: number, isCustom?: boolean) => Promise<void>;
+  onDeleteHabit: (id: number) => Promise<void>;
 }
 
-export const HabitList = ({ habits, customHabits, onToggleHabit }: HabitListProps) => {
+export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }: HabitListProps) => {
   return (
     <div className="space-y-4">
       {habits.map((habit) => (
@@ -39,6 +40,8 @@ export const HabitList = ({ habits, customHabits, onToggleHabit }: HabitListProp
           completed={habit.completed}
           progress={habit.progress}
           onClick={() => onToggleHabit(habit.id, true)}
+          onDelete={() => onDeleteHabit(habit.id)}
+          isCustom
         />
       ))}
     </div>

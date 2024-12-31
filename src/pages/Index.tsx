@@ -39,6 +39,30 @@ const Index = () => {
     fetchCustomHabits();
   }, []);
 
+  const deleteHabit = async (id: number) => {
+    try {
+      const { error } = await supabase
+        .from('custom_habits')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setCustomHabits(customHabits.filter(habit => habit.id !== id));
+      
+      toast({
+        title: "Hábito removido",
+        description: "O hábito personalizado foi removido com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao remover hábito",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const fetchCustomHabits = async () => {
     try {
       const { data, error } = await supabase
@@ -231,6 +255,7 @@ const Index = () => {
               habits={habits}
               customHabits={customHabits}
               onToggleHabit={toggleHabit}
+              onDeleteHabit={deleteHabit}
             />
             
             <AddHabitDialog

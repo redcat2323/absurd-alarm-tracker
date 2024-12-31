@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Check, X } from "lucide-react";
+import { Check, X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -10,9 +10,19 @@ interface HabitCardProps {
   completed: boolean;
   progress: number;
   onClick: () => void;
+  onDelete?: () => void;
+  isCustom?: boolean;
 }
 
-export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCardProps) => {
+export const HabitCard = ({ 
+  title, 
+  icon, 
+  completed, 
+  progress, 
+  onClick,
+  onDelete,
+  isCustom 
+}: HabitCardProps) => {
   return (
     <Card
       className={cn(
@@ -35,16 +45,29 @@ export const HabitCard = ({ title, icon, completed, progress, onClick }: HabitCa
       <p className="text-sm text-muted-foreground mt-2 mb-4">
         {progress}% completo
       </p>
-      <Button 
-        variant={completed ? "outline" : "default"}
-        className={cn(
-          "w-full",
-          completed && "border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
+      <div className="space-y-2">
+        <Button 
+          variant={completed ? "outline" : "default"}
+          className={cn(
+            "w-full",
+            completed && "border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
+          )}
+          onClick={onClick}
+        >
+          {completed ? "Desfazer" : "Marcar como realizado"}
+        </Button>
+        
+        {isCustom && onDelete && (
+          <Button 
+            variant="destructive"
+            className="w-full"
+            onClick={onDelete}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Remover Hábito
+          </Button>
         )}
-        onClick={onClick}
-      >
-        {completed ? "Desfazer" : "Marcar como realizado"}
-      </Button>
+      </div>
     </Card>
   );
 };
