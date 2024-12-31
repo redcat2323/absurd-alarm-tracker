@@ -2,6 +2,7 @@ import { HabitList } from "@/components/HabitList";
 import { AddHabitForm } from "@/components/AddHabitForm";
 import { useHabits } from "@/hooks/useHabits";
 import { useCelebration } from "@/hooks/useCelebration";
+import { CelebrationMessage } from "@/components/CelebrationMessage";
 
 interface HabitsSectionProps {
   userId: string;
@@ -9,7 +10,7 @@ interface HabitsSectionProps {
 
 export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const { habits, customHabits, toggleHabit, deleteHabit, refetchCustomHabits } = useHabits(userId);
-  const { checkAndCelebrate } = useCelebration();
+  const { checkAndCelebrate, showCelebration, setShowCelebration } = useCelebration();
 
   const handleToggleHabit = async (id: number, isCustom?: boolean) => {
     checkAndCelebrate(id, isCustom, habits, customHabits);
@@ -22,6 +23,11 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
 
   return (
     <div className="space-y-4">
+      <CelebrationMessage 
+        show={showCelebration} 
+        onClose={() => setShowCelebration(false)} 
+      />
+      
       <HabitList
         habits={habits}
         customHabits={customHabits || []}

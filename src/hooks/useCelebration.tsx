@@ -1,6 +1,7 @@
 import { toast } from "@/components/ui/use-toast";
 import confetti from "canvas-confetti";
 import { DefaultHabit, CustomHabit } from "@/types/habits";
+import { useState } from "react";
 
 const CELEBRATION_MESSAGES = [
   "🌟 Incrível! Você completou todos os hábitos hoje!",
@@ -11,6 +12,8 @@ const CELEBRATION_MESSAGES = [
 ];
 
 export const useCelebration = () => {
+  const [showCelebration, setShowCelebration] = useState(false);
+
   const checkAndCelebrate = (
     habitId: number,
     isCustom: boolean | undefined,
@@ -33,11 +36,6 @@ export const useCelebration = () => {
 
       const willAllBeCompleted = defaultHabitsCompleted && customHabitsCompleted;
 
-      console.info("Checking celebration conditions:");
-      console.info("Default habits will be completed:", defaultHabitsCompleted);
-      console.info("Custom habits will be completed:", customHabitsCompleted);
-      console.info("All habits will be completed?", willAllBeCompleted);
-
       if (willAllBeCompleted) {
         celebrate();
       }
@@ -50,6 +48,8 @@ export const useCelebration = () => {
       title: randomMessage,
       className: "animate-bounce",
     });
+
+    setShowCelebration(true);
 
     confetti({
       particleCount: 100,
@@ -76,5 +76,5 @@ export const useCelebration = () => {
     }, 250);
   };
 
-  return { checkAndCelebrate };
+  return { checkAndCelebrate, showCelebration, setShowCelebration };
 };
