@@ -27,13 +27,13 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" attribute="class">
         <TooltipProvider>
-          <div className="flex justify-between items-center p-4">
-            <ThemeToggle />
-            <LogoutButton />
-          </div>
-          <Toaster />
-          <Sonner />
           <BrowserRouter>
+            <div className="flex justify-between items-center p-4">
+              <ThemeToggle />
+              <LogoutButton />
+            </div>
+            <Toaster />
+            <Sonner />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/admin" element={<Admin />} />
