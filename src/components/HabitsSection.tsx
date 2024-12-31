@@ -24,18 +24,21 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const { habits, customHabits, toggleHabit, deleteHabit, refetchCustomHabits } = useHabits(userId);
   const [lastCompletionState, setLastCompletionState] = useState(false);
 
-  const checkAndCelebrate = (wasCompleted: boolean) => {
+  const checkAndCelebrate = () => {
+    // Ensure we have habits to check
+    if (!habits.length && !customHabits?.length) return;
+
     const defaultHabitsCompleted = habits.every(habit => habit.completed);
     const customHabitsCompleted = customHabits?.every(habit => habit.completed) ?? true;
     const allHabitsCompleted = defaultHabitsCompleted && customHabitsCompleted;
 
-    console.info("All habits completed?", allHabitsCompleted);
+    console.info("Checking celebration conditions:");
     console.info("Default habits completed:", defaultHabitsCompleted);
     console.info("Custom habits completed:", customHabitsCompleted);
-    console.info("Was habit marked as completed?", wasCompleted);
+    console.info("All habits completed?", allHabitsCompleted);
+    console.info("Last completion state:", lastCompletionState);
 
-    // Only celebrate when marking as completed AND all habits are now completed
-    if (wasCompleted && allHabitsCompleted && !lastCompletionState) {
+    if (allHabitsCompleted && !lastCompletionState) {
       setLastCompletionState(true);
       
       // Show celebration toast with random message
@@ -76,15 +79,9 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   };
 
   const handleToggleHabit = async (id: number, isCustom?: boolean) => {
-    // Determine if we're marking as completed before the toggle
-    const habit = isCustom 
-      ? customHabits?.find(h => h.id === id)
-      : habits.find(h => h.id === id);
-    const willBeCompleted = !habit?.completed;
-
     await toggleHabit(id, isCustom);
     // Add a small delay to ensure state updates before checking completion
-    setTimeout(() => checkAndCelebrate(willBeCompleted), 100);
+    setTimeout(checkAndCelebrate, 100);
   };
 
   const addCustomHabit = async () => {
