@@ -8,8 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { HabitList } from "@/components/HabitList";
 import { AddHabitDialog } from "@/components/AddHabitDialog";
 import { Header } from "@/components/Header";
-import { CustomHabit, DefaultHabit, DefaultHabitCompletion } from "@/types/habits";
+import { CustomHabit, DefaultHabit } from "@/types/habits";
 import { getDaysInCurrentYear } from "@/utils/dateUtils";
+import { resetAnnualProgress, shouldResetProgress } from "@/utils/yearTransition";
 
 const DEFAULT_HABITS = [
   { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" /> },
@@ -296,6 +297,28 @@ const Index = () => {
 
     return () => clearTimeout(resetTimer);
   }, [habits, customHabits]);
+
+  useEffect(() => {
+    const checkYearTransition = async () => {
+      if (shouldResetProgress()) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const success = await resetAnnualProgress(user.id);
+          if (success) {
+            toast({
+              title: "Feliz Ano Novo! 🎉",
+              description: "Seus hábitos foram resetados para o novo ano.",
+            });
+            // Recarrega os hábitos após o reset
+            await initializeDefaultHabits(user.id);
+            await fetchCustomHabits();
+          }
+        }
+      }
+    };
+
+    checkYearTransition();
+  }, []);
 
   const handleLogin = async (name: string) => {
     setIsAuthenticated(true);
