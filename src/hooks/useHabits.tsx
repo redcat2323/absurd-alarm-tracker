@@ -18,7 +18,6 @@ export const useHabits = (userId: string | undefined) => {
   const queryClient = useQueryClient();
   const [habits, setHabits] = useState<DefaultHabit[]>([]);
 
-  // Otimizado com staleTime maior e select para retornar apenas dados necessários
   const { data: defaultHabitCompletions } = useQuery({
     queryKey: ['defaultHabitCompletions', userId],
     queryFn: async () => {
@@ -29,40 +28,35 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 15 * 60 * 1000, // Cache por 15 minutos
+    staleTime: 15 * 60 * 1000,
     enabled: !!userId,
   });
 
-  // Otimizado com staleTime maior e select para retornar apenas dados necessários
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
     queryKey: ['customHabits', userId],
     queryFn: async () => {
       if (!userId) return [];
       const { data } = await supabase
         .from('custom_habits')
-        .select('id, title, completed, completed_days, progress')
+        .select('*')
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 15 * 60 * 1000, // Cache por 15 minutos
+    staleTime: 15 * 60 * 1000,
     enabled: !!userId,
   });
 
-  // Memoize habits transformation
   useEffect(() => {
     if (defaultHabitCompletions) {
-      const habitsWithCompletions = useMemo(() => 
-        DEFAULT_HABITS.map(habit => {
-          const completion = defaultHabitCompletions.find(c => c.habit_id === habit.id);
-          return {
-            ...habit,
-            completed: completion?.completed || false,
-            completedDays: completion?.completed_days || 0,
-            progress: completion?.progress || 0,
-          };
-        }),
-        [defaultHabitCompletions]
-      );
+      const habitsWithCompletions = DEFAULT_HABITS.map(habit => {
+        const completion = defaultHabitCompletions.find(c => c.habit_id === habit.id);
+        return {
+          ...habit,
+          completed: completion?.completed || false,
+          completedDays: completion?.completed_days || 0,
+          progress: completion?.progress || 0,
+        };
+      });
       setHabits(habitsWithCompletions);
     }
   }, [defaultHabitCompletions]);
@@ -97,7 +91,6 @@ export const useHabits = (userId: string | undefined) => {
 
         if (error) throw error;
         
-        // Otimizado: Atualiza o cache imediatamente
         queryClient.setQueryData(['customHabits', userId], (old: any) => 
           old?.map((h: any) => h.id === id ? {
             ...h,
@@ -145,7 +138,6 @@ export const useHabits = (userId: string | undefined) => {
 
         if (error) throw error;
 
-        // Otimizado: Atualiza o cache imediatamente
         queryClient.setQueryData(['defaultHabitCompletions', userId], (old: any) => 
           old?.map((h: any) => h.habit_id === id ? {
             ...h,
@@ -178,7 +170,6 @@ export const useHabits = (userId: string | undefined) => {
       
       if (error) throw error;
       
-      // Otimizado: Atualiza o cache imediatamente
       queryClient.setQueryData(['customHabits', userId], (old: any) => 
         old?.filter((h: any) => h.id !== id)
       );
@@ -198,7 +189,7 @@ export const useHabits = (userId: string | undefined) => {
 
   return {
     habits,
-    customHabits,
+    customHabits: customHabits as CustomHabit[],
     toggleHabit,
     deleteHabit,
     refetchCustomHabits

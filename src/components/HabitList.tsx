@@ -11,28 +11,26 @@ interface HabitListProps {
   onDeleteHabit: (id: number) => Promise<void>;
 }
 
-// Memoize HabitCard to prevent unnecessary re-renders
 const MemoizedHabitCard = memo(HabitCard);
 
 export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }: HabitListProps) => {
   const parentRef = useRef<HTMLDivElement>(null);
   
-  // Combine habits for virtualization
-  const allHabits = [
+  const allHabits = useMemo(() => [
     ...habits.map(habit => ({ ...habit, isCustom: false })),
     ...customHabits.map(habit => ({ 
       ...habit, 
       isCustom: true,
       icon: <Plus className="w-6 h-6" />,
-      completedDays: habit.completed_days // Map completed_days to completedDays for consistency
+      completedDays: habit.completed_days
     }))
-  ];
+  ], [habits, customHabits]);
 
   const virtualizer = useVirtualizer({
     count: allHabits.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 180, // Estimated height of each habit card
-    overscan: 5, // Number of items to render outside of the visible area
+    estimateSize: () => 180,
+    overscan: 5,
   });
 
   return (
