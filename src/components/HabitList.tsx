@@ -13,12 +13,17 @@ interface HabitListProps {
 
 const MemoizedHabitCard = memo(HabitCard);
 
-export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }: HabitListProps) => {
+export const HabitList = ({ 
+  habits = [], 
+  customHabits = [], 
+  onToggleHabit, 
+  onDeleteHabit 
+}: HabitListProps) => {
   const parentRef = useRef<HTMLDivElement>(null);
   
   const allHabits = useMemo(() => [
-    ...habits.map(habit => ({ ...habit, isCustom: false })),
-    ...customHabits.map(habit => ({ 
+    ...(habits || []).map(habit => ({ ...habit, isCustom: false })),
+    ...(customHabits || []).map(habit => ({ 
       ...habit, 
       isCustom: true,
       icon: <Plus className="w-6 h-6" />,
@@ -62,7 +67,7 @@ export const HabitList = ({ habits, customHabits, onToggleHabit, onDeleteHabit }
               icon={habit.icon}
               completed={habit.completed}
               progress={habit.progress}
-              completedDays={habit.completedDays}
+              completedDays={habit.isCustom ? habit.completed_days : habit.completedDays}
               onClick={() => onToggleHabit(habit.id, habit.isCustom)}
               onDelete={habit.isCustom ? () => onDeleteHabit(habit.id) : undefined}
               isCustom={habit.isCustom}
