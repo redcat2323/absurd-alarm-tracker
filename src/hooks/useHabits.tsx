@@ -31,7 +31,7 @@ export const useHabits = (userId: string | undefined) => {
       return data || [];
     },
     staleTime: 0, // Set to 0 to always refetch
-    cacheTime: 0, // Set to 0 to disable caching
+    gcTime: 0, // Set to 0 to disable caching (replaced cacheTime)
     enabled: !!userId,
   });
 
@@ -47,7 +47,7 @@ export const useHabits = (userId: string | undefined) => {
       return data || [];
     },
     staleTime: 0, // Set to 0 to always refetch
-    cacheTime: 0, // Set to 0 to disable caching
+    gcTime: 0, // Set to 0 to disable caching (replaced cacheTime)
     enabled: !!userId,
   });
 
@@ -59,7 +59,7 @@ export const useHabits = (userId: string | undefined) => {
       return getTodayCompletions(userId);
     },
     staleTime: 0, // Set to 0 to always refetch
-    cacheTime: 0, // Set to 0 to disable caching
+    gcTime: 0, // Set to 0 to disable caching (replaced cacheTime)
     refetchInterval: 1000, // Refetch every second
     enabled: !!userId,
   });
