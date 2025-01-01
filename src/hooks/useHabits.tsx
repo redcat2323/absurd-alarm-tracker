@@ -54,6 +54,8 @@ export const useHabits = (userId: string | undefined) => {
     enabled: !!userId,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    staleTime: 0,
+    cacheTime: 0
   });
 
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
@@ -68,6 +70,8 @@ export const useHabits = (userId: string | undefined) => {
     enabled: !!userId,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    staleTime: 0,
+    cacheTime: 0
   });
 
   useEffect(() => {
@@ -107,7 +111,7 @@ export const useHabits = (userId: string | undefined) => {
 
         await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
         await refetchCustomHabits();
-        queryClient.invalidateQueries({ queryKey: ['customHabits'] });
+        await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
         if (!habitToUpdate) {
@@ -122,13 +126,15 @@ export const useHabits = (userId: string | undefined) => {
         const newProgress = calculateAnnualProgress(newCompletedDays);
         console.log('Updating default habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
 
-        await updateDefaultHabit(
+        const result = await updateDefaultHabit(
           userId,
           id,
           !habitToUpdate.completed,
           newCompletedDays,
           newProgress
         );
+        
+        console.log('Update result:', result);
         
         await refetchDefaultHabits();
         await queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
@@ -152,7 +158,7 @@ export const useHabits = (userId: string | undefined) => {
     try {
       await deleteCustomHabit(id);
       await refetchCustomHabits();
-      queryClient.invalidateQueries({ queryKey: ['customHabits'] });
+      await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
       
       toast({
         title: "Hábito removido",

@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
 
 export const fetchDefaultHabitCompletions = async (userId: string) => {
   console.log('Fetching default habit completions for user:', userId);
@@ -50,7 +49,7 @@ export const updateDefaultHabit = async (
     .eq('habit_id', habitId)
     .single();
 
-  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 é o código para "não encontrado"
+  if (fetchError && fetchError.code !== 'PGRST116') {
     console.error('Error checking existing habit:', fetchError);
     throw fetchError;
   }
@@ -60,13 +59,13 @@ export const updateDefaultHabit = async (
     // Se não existe, inserimos um novo registro
     result = await supabase
       .from('default_habit_completions')
-      .insert({
+      .insert([{
         user_id: userId,
         habit_id: habitId,
         completed,
         completed_days: completedDays,
         progress
-      });
+      }]);
   } else {
     // Se existe, atualizamos o registro existente
     result = await supabase
@@ -85,7 +84,7 @@ export const updateDefaultHabit = async (
     throw result.error;
   }
 
-  console.log('Default habit updated successfully');
+  return result.data;
 };
 
 export const updateCustomHabit = async (
@@ -110,6 +109,7 @@ export const updateCustomHabit = async (
   }
 
   console.log('Custom habit updated successfully:', data);
+  return data;
 };
 
 export const deleteCustomHabit = async (habitId: number) => {
@@ -123,6 +123,4 @@ export const deleteCustomHabit = async (habitId: number) => {
     console.error('Error deleting custom habit:', error);
     throw error;
   }
-
-  console.log('Custom habit deleted successfully');
 };
