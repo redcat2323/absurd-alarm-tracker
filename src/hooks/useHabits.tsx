@@ -1,15 +1,23 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
-import { calculateAnnualProgress } from "@/utils/habitProgress";
-import { updateDefaultHabit, updateCustomHabit, deleteCustomHabit } from "@/utils/habitQueries";
 import { useHabitReset } from "./useHabitReset";
 import { useHabitQueries } from "./useHabitQueries";
 import { HabitState } from "@/types/habitTypes";
+import { 
+  toggleDefaultHabit, 
+  toggleCustomHabit, 
+  deleteCustomHabit as deleteHabitFromDB 
+} from "@/utils/habitManagement";
 
 export const useHabits = (userId: string | undefined): HabitState => {
   const queryClient = useQueryClient();
   const { lastResetDate } = useHabitReset(userId);
-  const { habits, customHabits, refetchDefaultHabits, refetchCustomHabits: originalRefetchCustomHabits } = useHabitQueries(userId);
+  const { 
+    habits, 
+    customHabits, 
+    refetchDefaultHabits, 
+    refetchCustomHabits: originalRefetchCustomHabits 
+  } = useHabitQueries(userId);
 
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
@@ -23,16 +31,13 @@ export const useHabits = (userId: string | undefined): HabitState => {
           return;
         }
 
-        const newCompletedDays = habitToUpdate.completed ? 
-          habitToUpdate.completed_days - 1 : 
-          habitToUpdate.completed_days + 1;
+        const result = await toggleCustomHabit(
+          id,
+          habitToUpdate.completed,
+          habitToUpdate.completed_days
+        );
         
-        const newProgress = calculateAnnualProgress(newCompletedDays);
-        console.log('Updating custom habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
-
-        const result = await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
-        if (result === null) return; // Hábito já foi concluído hoje
-        
+        if (result === null) return;
         await originalRefetchCustomHabits();
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
@@ -41,27 +46,17 @@ export const useHabits = (userId: string | undefined): HabitState => {
           return;
         }
 
-        const newCompletedDays = habitToUpdate.completed ? 
-          habitToUpdate.completedDays - 1 : 
-          habitToUpdate.completedDays + 1;
-        
-        const newProgress = calculateAnnualProgress(newCompletedDays);
-        console.log('Updating default habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
-
-        const result = await updateDefaultHabit(
+        const result = await toggleDefaultHabit(
           userId,
           id,
-          !habitToUpdate.completed,
-          newCompletedDays,
-          newProgress
+          habitToUpdate.completed,
+          habitToUpdate.completedDays
         );
         
-        if (result === null) return; // Hábito já foi concluído hoje
-        
+        if (result === null) return;
         await refetchDefaultHabits();
       }
 
-      // Força atualização imediata
       await queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
       await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
 
@@ -81,7 +76,7 @@ export const useHabits = (userId: string | undefined): HabitState => {
 
   const deleteHabit = async (id: number) => {
     try {
-      await deleteCustomHabit(id);
+      await deleteHabitFromDB(id);
       await originalRefetchCustomHabits();
       await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
       
@@ -99,7 +94,6 @@ export const useHabits = (userId: string | undefined): HabitState => {
     }
   };
 
-  // Wrapper function to make refetchCustomHabits return Promise<void>
   const refetchCustomHabits = async () => {
     await originalRefetchCustomHabits();
   };
