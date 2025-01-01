@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Book, Droplets, Moon, Sun, Timer } from "lucide-react";
 import { CustomHabit, DefaultHabit } from "@/types/habits";
-import { checkDailyCompletion, recordDailyCompletion } from "@/services/habitCompletions";
+import { checkDailyCompletion, recordDailyCompletion, getTodayCompletions } from "@/services/habitCompletions";
 import { updateCustomHabit, updateDefaultHabit } from "@/services/habitUpdates";
 
 const DEFAULT_HABITS = [
@@ -49,20 +49,35 @@ export const useHabits = (userId: string | undefined) => {
     enabled: !!userId,
   });
 
+  // Fetch today's completions
+  const { data: todayCompletions, refetch: refetchTodayCompletions } = useQuery({
+    queryKey: ['todayCompletions', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      return getTodayCompletions(userId);
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!userId,
+  });
+
   useEffect(() => {
-    if (defaultHabitCompletions) {
+    if (defaultHabitCompletions && todayCompletions) {
       const habitsWithCompletions = DEFAULT_HABITS.map(habit => {
         const completion = defaultHabitCompletions.find(c => c.habit_id === habit.id);
+        const completedToday = todayCompletions.some(
+          c => c.habit_id === habit.id && !c.is_custom_habit
+        );
+        
         return {
           ...habit,
-          completed: completion?.completed || false,
+          completed: completedToday,
           completedDays: completion?.completed_days || 0,
           progress: completion?.progress || 0,
         };
       });
       setHabits(habitsWithCompletions);
     }
-  }, [defaultHabitCompletions]);
+  }, [defaultHabitCompletions, todayCompletions]);
 
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
@@ -94,6 +109,9 @@ export const useHabits = (userId: string | undefined) => {
         await recordDailyCompletion(userId, id, false);
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
       }
+
+      // Refetch today's completions to update the UI
+      await refetchTodayCompletions();
 
       toast({
         title: "Hábito atualizado!",
@@ -134,7 +152,12 @@ export const useHabits = (userId: string | undefined) => {
 
   return {
     habits,
-    customHabits,
+    customHabits: customHabits?.map(habit => ({
+      ...habit,
+      completed: todayCompletions?.some(
+        c => c.habit_id === habit.id && c.is_custom_habit
+      ) || false,
+    })) || [],
     toggleHabit,
     deleteHabit,
     refetchCustomHabits
