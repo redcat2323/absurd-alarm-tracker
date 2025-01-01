@@ -41,24 +41,51 @@ export const updateDefaultHabit = async (
   progress: number
 ) => {
   console.log('Updating default habit:', { userId, habitId, completed, completedDays, progress });
-  const { data, error } = await supabase
+  
+  // Primeiro, verificamos se já existe um registro
+  const { data: existingData, error: fetchError } = await supabase
     .from('default_habit_completions')
-    .upsert({
-      user_id: userId,
-      habit_id: habitId,
-      completed,
-      completed_days: completedDays,
-      progress
-    }, {
-      onConflict: 'user_id,habit_id'
-    });
+    .select('*')
+    .eq('user_id', userId)
+    .eq('habit_id', habitId)
+    .single();
 
-  if (error) {
-    console.error('Error updating default habit:', error);
-    throw error;
+  if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 é o código para "não encontrado"
+    console.error('Error checking existing habit:', fetchError);
+    throw fetchError;
   }
 
-  console.log('Default habit updated successfully:', data);
+  let result;
+  if (!existingData) {
+    // Se não existe, inserimos um novo registro
+    result = await supabase
+      .from('default_habit_completions')
+      .insert({
+        user_id: userId,
+        habit_id: habitId,
+        completed,
+        completed_days: completedDays,
+        progress
+      });
+  } else {
+    // Se existe, atualizamos o registro existente
+    result = await supabase
+      .from('default_habit_completions')
+      .update({
+        completed,
+        completed_days: completedDays,
+        progress
+      })
+      .eq('user_id', userId)
+      .eq('habit_id', habitId);
+  }
+
+  if (result.error) {
+    console.error('Error updating default habit:', result.error);
+    throw result.error;
+  }
+
+  console.log('Default habit updated successfully');
 };
 
 export const updateCustomHabit = async (

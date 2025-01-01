@@ -52,6 +52,8 @@ export const useHabits = (userId: string | undefined) => {
       return data;
     },
     enabled: !!userId,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
@@ -64,6 +66,8 @@ export const useHabits = (userId: string | undefined) => {
       return data;
     },
     enabled: !!userId,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   useEffect(() => {
@@ -103,6 +107,7 @@ export const useHabits = (userId: string | undefined) => {
 
         await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
         await refetchCustomHabits();
+        queryClient.invalidateQueries({ queryKey: ['customHabits'] });
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
         if (!habitToUpdate) {
@@ -126,7 +131,7 @@ export const useHabits = (userId: string | undefined) => {
         );
         
         await refetchDefaultHabits();
-        await queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions'] });
+        await queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
       }
 
       toast({
@@ -147,6 +152,7 @@ export const useHabits = (userId: string | undefined) => {
     try {
       await deleteCustomHabit(id);
       await refetchCustomHabits();
+      queryClient.invalidateQueries({ queryKey: ['customHabits'] });
       
       toast({
         title: "Hábito removido",
