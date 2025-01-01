@@ -1,4 +1,5 @@
 import { DefaultHabit, CustomHabit } from "./habits";
+import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 
 export interface HabitState {
   habits: DefaultHabit[];

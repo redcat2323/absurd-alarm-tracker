@@ -10,7 +10,7 @@ import { HabitState } from "@/types/habitTypes";
 export const useHabits = (userId: string | undefined): HabitState => {
   const queryClient = useQueryClient();
   const { lastResetDate } = useHabitReset(userId);
-  const { habits, customHabits, refetchDefaultHabits, refetchCustomHabits } = useHabitQueries(userId);
+  const { habits, customHabits, refetchDefaultHabits, refetchCustomHabits: originalRefetchCustomHabits } = useHabitQueries(userId);
 
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
@@ -32,7 +32,7 @@ export const useHabits = (userId: string | undefined): HabitState => {
         console.log('Updating custom habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
 
         await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
-        await refetchCustomHabits();
+        await originalRefetchCustomHabits();
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
         if (!habitToUpdate) {
@@ -79,7 +79,7 @@ export const useHabits = (userId: string | undefined): HabitState => {
   const deleteHabit = async (id: number) => {
     try {
       await deleteCustomHabit(id);
-      await refetchCustomHabits();
+      await originalRefetchCustomHabits();
       await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
       
       toast({
@@ -94,6 +94,11 @@ export const useHabits = (userId: string | undefined): HabitState => {
         variant: "destructive",
       });
     }
+  };
+
+  // Wrapper function to make refetchCustomHabits return Promise<void>
+  const refetchCustomHabits = async () => {
+    await originalRefetchCustomHabits();
   };
 
   return {
