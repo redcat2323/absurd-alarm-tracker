@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 export const fetchDefaultHabitCompletions = async (userId: string) => {
   console.log('Fetching default habit completions for user:', userId);
@@ -32,6 +33,38 @@ export const fetchCustomHabits = async (userId: string) => {
   return data || [];
 };
 
+const checkHabitCompletionForToday = async (userId: string, habitId: number, isCustom: boolean) => {
+  const today = new Date().toISOString().split('T')[0];
+  const table = isCustom ? 'custom_habits' : 'default_habit_completions';
+  const idField = isCustom ? 'id' : 'habit_id';
+
+  const { data, error } = await supabase
+    .from(table)
+    .select('completed, updated_at')
+    .eq('user_id', userId)
+    .eq(idField, habitId)
+    .single();
+
+  if (error) {
+    console.error('Error checking habit completion:', error);
+    return false;
+  }
+
+  if (!data) return false;
+
+  // Se o hábito já foi completado hoje, não permitir nova marcação
+  if (data.completed && data.updated_at?.startsWith(today)) {
+    toast({
+      title: "Hábito já concluído",
+      description: "Este hábito já foi concluído hoje. Volte amanhã!",
+      variant: "destructive",
+    });
+    return true;
+  }
+
+  return false;
+};
+
 export const updateDefaultHabit = async (
   userId: string,
   habitId: number,
@@ -40,6 +73,11 @@ export const updateDefaultHabit = async (
   progress: number
 ) => {
   console.log('Updating default habit:', { userId, habitId, completed, completedDays, progress });
+
+  // Verificar se o hábito já foi completado hoje
+  if (completed && await checkHabitCompletionForToday(userId, habitId, false)) {
+    return null;
+  }
   
   const { data: existingData, error: fetchError } = await supabase
     .from('default_habit_completions')
@@ -53,6 +91,8 @@ export const updateDefaultHabit = async (
     throw fetchError;
   }
 
+  const today = new Date().toISOString();
+
   let result;
   if (!existingData) {
     result = await supabase
@@ -62,7 +102,8 @@ export const updateDefaultHabit = async (
         habit_id: habitId,
         completed,
         completed_days: completedDays,
-        progress
+        progress,
+        updated_at: today
       }])
       .select()
       .single();
@@ -72,7 +113,8 @@ export const updateDefaultHabit = async (
       .update({
         completed,
         completed_days: completedDays,
-        progress
+        progress,
+        updated_at: today
       })
       .eq('user_id', userId)
       .eq('habit_id', habitId)
@@ -96,12 +138,27 @@ export const updateCustomHabit = async (
   progress: number
 ) => {
   console.log('Updating custom habit:', { habitId, completed, completedDays, progress });
+
+  // Verificar se o hábito já foi completado hoje
+  const { data: habitData } = await supabase
+    .from('custom_habits')
+    .select('user_id')
+    .eq('id', habitId)
+    .single();
+
+  if (completed && await checkHabitCompletionForToday(habitData.user_id, habitId, true)) {
+    return null;
+  }
+
+  const today = new Date().toISOString();
+
   const { data, error } = await supabase
     .from('custom_habits')
     .update({
       completed,
       completed_days: completedDays,
-      progress
+      progress,
+      updated_at: today
     })
     .eq('id', habitId)
     .select()
