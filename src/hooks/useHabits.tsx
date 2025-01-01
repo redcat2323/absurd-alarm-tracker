@@ -42,18 +42,18 @@ export const useHabits = (userId: string | undefined) => {
     return () => clearInterval(resetInterval);
   }, [userId, lastResetDate, queryClient]);
 
-  const { data: defaultHabitCompletions } = useQuery({
+  const { data: defaultHabitCompletions, refetch: refetchDefaultHabits } = useQuery({
     queryKey: ['defaultHabitCompletions', userId],
     queryFn: () => userId ? fetchDefaultHabitCompletions(userId) : Promise.resolve([]),
     enabled: !!userId,
-    staleTime: 1000, // Reduzido para 1 segundo para atualizar mais frequentemente
+    staleTime: 0, // Removido o staleTime para sempre buscar dados frescos
   });
 
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
     queryKey: ['customHabits', userId],
     queryFn: () => userId ? fetchCustomHabits(userId) : Promise.resolve([]),
     enabled: !!userId,
-    staleTime: 1000, // Reduzido para 1 segundo para atualizar mais frequentemente
+    staleTime: 0, // Removido o staleTime para sempre buscar dados frescos
   });
 
   useEffect(() => {
@@ -105,6 +105,7 @@ export const useHabits = (userId: string | undefined) => {
           newProgress
         );
         
+        await refetchDefaultHabits(); // Adicionado refetch explícito
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
       }
 
@@ -113,6 +114,7 @@ export const useHabits = (userId: string | undefined) => {
         description: "Seu progresso anual foi atualizado.",
       });
     } catch (error: any) {
+      console.error('Erro ao atualizar hábito:', error);
       toast({
         title: "Erro ao atualizar hábito",
         description: error.message,
@@ -131,6 +133,7 @@ export const useHabits = (userId: string | undefined) => {
         description: "O hábito personalizado foi removido com sucesso.",
       });
     } catch (error: any) {
+      console.error('Erro ao remover hábito:', error);
       toast({
         title: "Erro ao remover hábito",
         description: error.message,
