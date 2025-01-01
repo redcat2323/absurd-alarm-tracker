@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
 export const fetchDefaultHabitCompletions = async (userId: string) => {
+  console.log('Fetching default habit completions for user:', userId);
   const { data, error } = await supabase
     .from('default_habit_completions')
     .select('*')
@@ -12,10 +13,12 @@ export const fetchDefaultHabitCompletions = async (userId: string) => {
     throw error;
   }
   
+  console.log('Fetched default habit completions:', data);
   return data || [];
 };
 
 export const fetchCustomHabits = async (userId: string) => {
+  console.log('Fetching custom habits for user:', userId);
   const { data, error } = await supabase
     .from('custom_habits')
     .select('*')
@@ -26,6 +29,7 @@ export const fetchCustomHabits = async (userId: string) => {
     throw error;
   }
   
+  console.log('Fetched custom habits:', data);
   return data || [];
 };
 
@@ -36,7 +40,8 @@ export const updateDefaultHabit = async (
   completedDays: number,
   progress: number
 ) => {
-  const { error } = await supabase
+  console.log('Updating default habit:', { userId, habitId, completed, completedDays, progress });
+  const { data, error } = await supabase
     .from('default_habit_completions')
     .upsert({
       user_id: userId,
@@ -52,6 +57,8 @@ export const updateDefaultHabit = async (
     console.error('Error updating default habit:', error);
     throw error;
   }
+
+  console.log('Default habit updated successfully:', data);
 };
 
 export const updateCustomHabit = async (
@@ -60,7 +67,8 @@ export const updateCustomHabit = async (
   completedDays: number,
   progress: number
 ) => {
-  const { error } = await supabase
+  console.log('Updating custom habit:', { habitId, completed, completedDays, progress });
+  const { data, error } = await supabase
     .from('custom_habits')
     .update({
       completed,
@@ -73,9 +81,12 @@ export const updateCustomHabit = async (
     console.error('Error updating custom habit:', error);
     throw error;
   }
+
+  console.log('Custom habit updated successfully:', data);
 };
 
 export const deleteCustomHabit = async (habitId: number) => {
+  console.log('Deleting custom habit:', habitId);
   const { error } = await supabase
     .from('custom_habits')
     .delete()
@@ -85,4 +96,6 @@ export const deleteCustomHabit = async (habitId: number) => {
     console.error('Error deleting custom habit:', error);
     throw error;
   }
+
+  console.log('Custom habit deleted successfully');
 };

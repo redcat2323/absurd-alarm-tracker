@@ -32,8 +32,8 @@ export const useHabits = (userId: string | undefined) => {
 
       if (shouldResetAnnualProgress()) {
         await resetAnnualHabits(userId);
-        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
-        queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
+        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions'] });
+        queryClient.invalidateQueries({ queryKey: ['customHabits'] });
       }
     };
 
@@ -44,20 +44,31 @@ export const useHabits = (userId: string | undefined) => {
 
   const { data: defaultHabitCompletions, refetch: refetchDefaultHabits } = useQuery({
     queryKey: ['defaultHabitCompletions', userId],
-    queryFn: () => userId ? fetchDefaultHabitCompletions(userId) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!userId) return [];
+      console.log('Fetching default habit completions for user:', userId);
+      const data = await fetchDefaultHabitCompletions(userId);
+      console.log('Fetched default habit completions:', data);
+      return data;
+    },
     enabled: !!userId,
-    staleTime: 0, // Removido o staleTime para sempre buscar dados frescos
   });
 
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
     queryKey: ['customHabits', userId],
-    queryFn: () => userId ? fetchCustomHabits(userId) : Promise.resolve([]),
+    queryFn: async () => {
+      if (!userId) return [];
+      console.log('Fetching custom habits for user:', userId);
+      const data = await fetchCustomHabits(userId);
+      console.log('Fetched custom habits:', data);
+      return data;
+    },
     enabled: !!userId,
-    staleTime: 0, // Removido o staleTime para sempre buscar dados frescos
   });
 
   useEffect(() => {
     if (defaultHabitCompletions) {
+      console.log('Updating habits state with completions:', defaultHabitCompletions);
       const habitsWithCompletions = DEFAULT_HABITS.map(habit => {
         const completion = defaultHabitCompletions.find(c => c.habit_id === habit.id);
         return {
@@ -73,29 +84,38 @@ export const useHabits = (userId: string | undefined) => {
 
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
+    console.log(`Toggling ${isCustom ? 'custom' : 'default'} habit:`, id);
 
     try {
       if (isCustom) {
         const habitToUpdate = customHabits?.find(h => h.id === id);
-        if (!habitToUpdate) return;
+        if (!habitToUpdate) {
+          console.error('Custom habit not found:', id);
+          return;
+        }
 
         const newCompletedDays = habitToUpdate.completed ? 
           habitToUpdate.completed_days - 1 : 
           habitToUpdate.completed_days + 1;
         
         const newProgress = calculateAnnualProgress(newCompletedDays);
+        console.log('Updating custom habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
 
         await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
         await refetchCustomHabits();
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
-        if (!habitToUpdate) return;
+        if (!habitToUpdate) {
+          console.error('Default habit not found:', id);
+          return;
+        }
 
         const newCompletedDays = habitToUpdate.completed ? 
           habitToUpdate.completedDays - 1 : 
           habitToUpdate.completedDays + 1;
         
         const newProgress = calculateAnnualProgress(newCompletedDays);
+        console.log('Updating default habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
 
         await updateDefaultHabit(
           userId,
@@ -105,8 +125,8 @@ export const useHabits = (userId: string | undefined) => {
           newProgress
         );
         
-        await refetchDefaultHabits(); // Adicionado refetch explícito
-        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
+        await refetchDefaultHabits();
+        await queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions'] });
       }
 
       toast({
