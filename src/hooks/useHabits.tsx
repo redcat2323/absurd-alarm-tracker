@@ -1,92 +1,16 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
-import { CustomHabit, DefaultHabit } from "@/types/habits";
-import { resetDailyHabits, resetAnnualHabits, shouldResetAnnualProgress } from "@/utils/habitReset";
 import { calculateAnnualProgress } from "@/utils/habitProgress";
-import { DEFAULT_HABITS } from "@/utils/habitConstants";
-import {
-  fetchDefaultHabitCompletions,
-  fetchCustomHabits,
-  updateDefaultHabit,
-  updateCustomHabit,
-  deleteCustomHabit
-} from "@/utils/habitQueries";
+import { updateDefaultHabit, updateCustomHabit, deleteCustomHabit } from "@/utils/habitQueries";
+import { useHabitReset } from "./useHabitReset";
+import { useHabitQueries } from "./useHabitQueries";
+import { HabitState } from "@/types/habitTypes";
 
-export const useHabits = (userId: string | undefined) => {
+export const useHabits = (userId: string | undefined): HabitState => {
   const queryClient = useQueryClient();
-  const [habits, setHabits] = useState<DefaultHabit[]>([]);
-  const [lastResetDate, setLastResetDate] = useState<string>('');
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const checkAndResetHabits = async () => {
-      const today = new Date();
-      const currentDate = today.toISOString().split('T')[0];
-      
-      if (lastResetDate !== currentDate) {
-        await resetDailyHabits(userId);
-        setLastResetDate(currentDate);
-      }
-
-      if (shouldResetAnnualProgress()) {
-        await resetAnnualHabits(userId);
-        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions'] });
-        queryClient.invalidateQueries({ queryKey: ['customHabits'] });
-      }
-    };
-
-    checkAndResetHabits();
-    const resetInterval = setInterval(checkAndResetHabits, 60000);
-    return () => clearInterval(resetInterval);
-  }, [userId, lastResetDate, queryClient]);
-
-  const { data: defaultHabitCompletions, refetch: refetchDefaultHabits } = useQuery({
-    queryKey: ['defaultHabitCompletions', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      console.log('Fetching default habit completions for user:', userId);
-      const data = await fetchDefaultHabitCompletions(userId);
-      console.log('Fetched default habit completions:', data);
-      return data;
-    },
-    enabled: !!userId,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0
-  });
-
-  const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
-    queryKey: ['customHabits', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      console.log('Fetching custom habits for user:', userId);
-      const data = await fetchCustomHabits(userId);
-      console.log('Fetched custom habits:', data);
-      return data;
-    },
-    enabled: !!userId,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    staleTime: 0
-  });
-
-  useEffect(() => {
-    if (defaultHabitCompletions) {
-      console.log('Updating habits state with completions:', defaultHabitCompletions);
-      const habitsWithCompletions = DEFAULT_HABITS.map(habit => {
-        const completion = defaultHabitCompletions.find(c => c.habit_id === habit.id);
-        return {
-          ...habit,
-          completed: completion?.completed || false,
-          completedDays: completion?.completed_days || 0,
-          progress: completion?.progress || 0,
-        };
-      });
-      setHabits(habitsWithCompletions);
-    }
-  }, [defaultHabitCompletions]);
+  const { lastResetDate } = useHabitReset(userId);
+  const { habits, customHabits, refetchDefaultHabits, refetchCustomHabits } = useHabitQueries(userId);
 
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
