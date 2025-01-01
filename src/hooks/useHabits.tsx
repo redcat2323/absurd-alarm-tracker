@@ -1,26 +1,23 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { Book, Droplets, Moon, Sun, Timer } from "lucide-react";
 import { CustomHabit, DefaultHabit } from "@/types/habits";
 import { resetDailyHabits, resetAnnualHabits, shouldResetAnnualProgress } from "@/utils/habitReset";
 import { calculateAnnualProgress } from "@/utils/habitProgress";
-
-const DEFAULT_HABITS = [
-  { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" /> },
-  { id: 2, title: "Banho Natural", icon: <Droplets className="w-6 h-6" /> },
-  { id: 3, title: "Devocional - Boot Diário", icon: <Sun className="w-6 h-6" /> },
-  { id: 4, title: "Leitura Diária", icon: <Book className="w-6 h-6" /> },
-  { id: 5, title: "Exercício Diário", icon: <Moon className="w-6 h-6" /> },
-];
+import { DEFAULT_HABITS } from "@/utils/habitConstants";
+import {
+  fetchDefaultHabitCompletions,
+  fetchCustomHabits,
+  updateDefaultHabit,
+  updateCustomHabit,
+  deleteCustomHabit
+} from "@/utils/habitQueries";
 
 export const useHabits = (userId: string | undefined) => {
   const queryClient = useQueryClient();
   const [habits, setHabits] = useState<DefaultHabit[]>([]);
   const [lastResetDate, setLastResetDate] = useState<string>('');
 
-  // Check for year transition and midnight reset
   useEffect(() => {
     if (!userId) return;
 
@@ -28,13 +25,11 @@ export const useHabits = (userId: string | undefined) => {
       const today = new Date();
       const currentDate = today.toISOString().split('T')[0];
       
-      // Reset at midnight if it's a new day
       if (lastResetDate !== currentDate) {
         await resetDailyHabits(userId);
         setLastResetDate(currentDate);
       }
 
-      // Reset for new year
       if (shouldResetAnnualProgress()) {
         await resetAnnualHabits(userId);
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
@@ -42,43 +37,23 @@ export const useHabits = (userId: string | undefined) => {
       }
     };
 
-    // Initial check
     checkAndResetHabits();
-    
-    // Set up interval for periodic checks
-    const resetInterval = setInterval(checkAndResetHabits, 60000); // Check every minute
-
+    const resetInterval = setInterval(checkAndResetHabits, 60000);
     return () => clearInterval(resetInterval);
   }, [userId, lastResetDate, queryClient]);
 
-  // Fetch default habits with caching
   const { data: defaultHabitCompletions } = useQuery({
     queryKey: ['defaultHabitCompletions', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      const { data } = await supabase
-        .from('default_habit_completions')
-        .select('*')
-        .eq('user_id', userId);
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    queryFn: () => userId ? fetchDefaultHabitCompletions(userId) : Promise.resolve([]),
     enabled: !!userId,
+    staleTime: 1000, // Reduzido para 1 segundo para atualizar mais frequentemente
   });
 
-  // Fetch custom habits with caching
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
     queryKey: ['customHabits', userId],
-    queryFn: async () => {
-      if (!userId) return [];
-      const { data } = await supabase
-        .from('custom_habits')
-        .select('*')
-        .eq('user_id', userId);
-      return data || [];
-    },
-    staleTime: 5 * 60 * 1000,
+    queryFn: () => userId ? fetchCustomHabits(userId) : Promise.resolve([]),
     enabled: !!userId,
+    staleTime: 1000, // Reduzido para 1 segundo para atualizar mais frequentemente
   });
 
   useEffect(() => {
@@ -99,89 +74,56 @@ export const useHabits = (userId: string | undefined) => {
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
 
-    if (isCustom) {
-      const habitToUpdate = customHabits?.find(h => h.id === id);
-      if (!habitToUpdate) return;
+    try {
+      if (isCustom) {
+        const habitToUpdate = customHabits?.find(h => h.id === id);
+        if (!habitToUpdate) return;
 
-      const newCompletedDays = habitToUpdate.completed ? 
-        habitToUpdate.completed_days - 1 : 
-        habitToUpdate.completed_days + 1;
-      
-      const newProgress = calculateAnnualProgress(newCompletedDays);
+        const newCompletedDays = habitToUpdate.completed ? 
+          habitToUpdate.completed_days - 1 : 
+          habitToUpdate.completed_days + 1;
+        
+        const newProgress = calculateAnnualProgress(newCompletedDays);
 
-      try {
-        const { error } = await supabase
-          .from('custom_habits')
-          .update({
-            completed: !habitToUpdate.completed,
-            completed_days: newCompletedDays,
-            progress: newProgress
-          })
-          .eq('id', id);
-
-        if (error) throw error;
+        await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
         await refetchCustomHabits();
+      } else {
+        const habitToUpdate = habits.find(h => h.id === id);
+        if (!habitToUpdate) return;
 
-        toast({
-          title: "Hábito atualizado!",
-          description: "Seu progresso anual foi atualizado.",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Erro ao atualizar hábito",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } else {
-      const habitToUpdate = habits.find(h => h.id === id);
-      if (!habitToUpdate) return;
+        const newCompletedDays = habitToUpdate.completed ? 
+          habitToUpdate.completedDays - 1 : 
+          habitToUpdate.completedDays + 1;
+        
+        const newProgress = calculateAnnualProgress(newCompletedDays);
 
-      const newCompletedDays = habitToUpdate.completed ? 
-        habitToUpdate.completedDays - 1 : 
-        habitToUpdate.completedDays + 1;
-      
-      const newProgress = calculateAnnualProgress(newCompletedDays);
-
-      try {
-        const { error } = await supabase
-          .from('default_habit_completions')
-          .upsert({
-            user_id: userId,
-            habit_id: id,
-            completed: !habitToUpdate.completed,
-            completed_days: newCompletedDays,
-            progress: newProgress
-          }, {
-            onConflict: 'user_id,habit_id'
-          });
-
-        if (error) throw error;
+        await updateDefaultHabit(
+          userId,
+          id,
+          !habitToUpdate.completed,
+          newCompletedDays,
+          newProgress
+        );
+        
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
-
-        toast({
-          title: "Hábito atualizado!",
-          description: "Seu progresso anual foi atualizado.",
-        });
-      } catch (error: any) {
-        toast({
-          title: "Erro ao atualizar hábito",
-          description: error.message,
-          variant: "destructive",
-        });
       }
+
+      toast({
+        title: "Hábito atualizado!",
+        description: "Seu progresso anual foi atualizado.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar hábito",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
   const deleteHabit = async (id: number) => {
     try {
-      const { error } = await supabase
-        .from('custom_habits')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-      
+      await deleteCustomHabit(id);
       await refetchCustomHabits();
       
       toast({
