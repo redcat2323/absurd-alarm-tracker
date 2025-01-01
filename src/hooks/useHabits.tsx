@@ -6,7 +6,8 @@ import { HabitState } from "@/types/habitTypes";
 import { 
   toggleDefaultHabit, 
   toggleCustomHabit, 
-  deleteCustomHabit 
+  deleteCustomHabit,
+  wasHabitCompletedToday
 } from "@/utils/habitManagement";
 
 export const useHabits = (userId: string | undefined): HabitState => {

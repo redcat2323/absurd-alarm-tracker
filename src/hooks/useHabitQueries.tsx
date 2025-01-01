@@ -1,17 +1,46 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchDefaultHabitCompletions, fetchCustomHabits } from "@/utils/habitQueries";
+import { supabase } from "@/integrations/supabase/client";
 import { DefaultHabit } from "@/types/habits";
 import { DEFAULT_HABITS } from "@/utils/habitConstants";
+
+const fetchDefaultHabitCompletions = async (userId: string) => {
+  console.log('Fetching default habit completions for user:', userId);
+  const { data, error } = await supabase
+    .from('default_habit_completions')
+    .select('*')
+    .eq('user_id', userId);
+    
+  if (error) {
+    console.error('Error fetching default habits:', error);
+    throw error;
+  }
+  
+  console.log('Fetched default habit completions:', data);
+  return data || [];
+};
+
+const fetchCustomHabits = async (userId: string) => {
+  console.log('Fetching custom habits for user:', userId);
+  const { data, error } = await supabase
+    .from('custom_habits')
+    .select('*')
+    .eq('user_id', userId);
+    
+  if (error) {
+    console.error('Error fetching custom habits:', error);
+    throw error;
+  }
+  
+  console.log('Fetched custom habits:', data);
+  return data || [];
+};
 
 export const useHabitQueries = (userId: string | undefined) => {
   const { data: defaultHabitCompletions, refetch: refetchDefaultHabits } = useQuery({
     queryKey: ['defaultHabitCompletions', userId],
     queryFn: async () => {
       if (!userId) return [];
-      console.log('Fetching default habit completions for user:', userId);
-      const data = await fetchDefaultHabitCompletions(userId);
-      console.log('Fetched default habit completions:', data);
-      return data;
+      return await fetchDefaultHabitCompletions(userId);
     },
     enabled: !!userId,
     refetchOnWindowFocus: true,
@@ -23,10 +52,7 @@ export const useHabitQueries = (userId: string | undefined) => {
     queryKey: ['customHabits', userId],
     queryFn: async () => {
       if (!userId) return [];
-      console.log('Fetching custom habits for user:', userId);
-      const data = await fetchCustomHabits(userId);
-      console.log('Fetched custom habits:', data);
-      return data;
+      return await fetchCustomHabits(userId);
     },
     enabled: !!userId,
     refetchOnWindowFocus: true,
