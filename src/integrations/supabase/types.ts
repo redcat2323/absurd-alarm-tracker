@@ -96,6 +96,33 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_daily_completions: {
+        Row: {
+          completion_date: string
+          created_at: string
+          habit_id: number
+          id: number
+          is_custom_habit: boolean
+          user_id: string
+        }
+        Insert: {
+          completion_date?: string
+          created_at?: string
+          habit_id: number
+          id?: number
+          is_custom_habit?: boolean
+          user_id: string
+        }
+        Update: {
+          completion_date?: string
+          created_at?: string
+          habit_id?: number
+          id?: number
+          is_custom_habit?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       weekly_books: {
         Row: {
           author: string

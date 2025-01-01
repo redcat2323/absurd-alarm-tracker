@@ -68,20 +68,58 @@ export const useHabits = (userId: string | undefined) => {
     return Number(((completedDays / daysInYear) * 100).toFixed(2));
   };
 
+  const checkDailyCompletion = async (habitId: number, isCustom: boolean) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const { data: existingCompletion } = await supabase
+      .from('habit_daily_completions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('habit_id', habitId)
+      .eq('is_custom_habit', isCustom)
+      .eq('completion_date', today)
+      .single();
+
+    return existingCompletion;
+  };
+
+  const recordDailyCompletion = async (habitId: number, isCustom: boolean) => {
+    const { error } = await supabase
+      .from('habit_daily_completions')
+      .insert([{
+        user_id: userId,
+        habit_id: habitId,
+        is_custom_habit: isCustom
+      }]);
+
+    if (error) throw error;
+  };
+
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
 
-    if (isCustom) {
-      const habitToUpdate = customHabits?.find(h => h.id === id);
-      if (!habitToUpdate) return;
-
-      const newCompletedDays = habitToUpdate.completed ? 
-        habitToUpdate.completed_days - 1 : 
-        habitToUpdate.completed_days + 1;
+    try {
+      const existingCompletion = await checkDailyCompletion(id, isCustom);
       
-      const newProgress = calculateAnnualProgress(newCompletedDays);
+      if (existingCompletion) {
+        toast({
+          title: "Hábito já concluído",
+          description: "Você já marcou este hábito como concluído hoje.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      try {
+      if (isCustom) {
+        const habitToUpdate = customHabits?.find(h => h.id === id);
+        if (!habitToUpdate) return;
+
+        const newCompletedDays = habitToUpdate.completed ? 
+          habitToUpdate.completed_days - 1 : 
+          habitToUpdate.completed_days + 1;
+        
+        const newProgress = calculateAnnualProgress(newCompletedDays);
+
         const { error } = await supabase
           .from('custom_habits')
           .update({
@@ -92,30 +130,27 @@ export const useHabits = (userId: string | undefined) => {
           .eq('id', id);
 
         if (error) throw error;
+
+        if (!habitToUpdate.completed) {
+          await recordDailyCompletion(id, true);
+        }
+
         await refetchCustomHabits();
 
         toast({
           title: "Hábito atualizado!",
           description: "Seu progresso anual foi atualizado.",
         });
-      } catch (error: any) {
-        toast({
-          title: "Erro ao atualizar hábito",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    } else {
-      const habitToUpdate = habits.find(h => h.id === id);
-      if (!habitToUpdate) return;
+      } else {
+        const habitToUpdate = habits.find(h => h.id === id);
+        if (!habitToUpdate) return;
 
-      const newCompletedDays = habitToUpdate.completed ? 
-        habitToUpdate.completedDays - 1 : 
-        habitToUpdate.completedDays + 1;
-      
-      const newProgress = calculateAnnualProgress(newCompletedDays);
+        const newCompletedDays = habitToUpdate.completed ? 
+          habitToUpdate.completedDays - 1 : 
+          habitToUpdate.completedDays + 1;
+        
+        const newProgress = calculateAnnualProgress(newCompletedDays);
 
-      try {
         const { error } = await supabase
           .from('default_habit_completions')
           .upsert({
@@ -129,19 +164,24 @@ export const useHabits = (userId: string | undefined) => {
           });
 
         if (error) throw error;
+
+        if (!habitToUpdate.completed) {
+          await recordDailyCompletion(id, false);
+        }
+
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
 
         toast({
           title: "Hábito atualizado!",
           description: "Seu progresso anual foi atualizado.",
         });
-      } catch (error: any) {
-        toast({
-          title: "Erro ao atualizar hábito",
-          description: error.message,
-          variant: "destructive",
-        });
       }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar hábito",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
