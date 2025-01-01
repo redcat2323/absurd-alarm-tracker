@@ -55,7 +55,7 @@ export const useHabits = (userId: string | undefined) => {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
-    cacheTime: 0
+    gcTime: 0
   });
 
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
@@ -71,7 +71,7 @@ export const useHabits = (userId: string | undefined) => {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
-    cacheTime: 0
+    gcTime: 0
   });
 
   useEffect(() => {
