@@ -34,7 +34,9 @@ export const fetchCustomHabits = async (userId: string) => {
 };
 
 const wasHabitCompletedToday = async (habitId: number, userId: string, isCustom: boolean) => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
   const table = isCustom ? 'custom_habits' : 'default_habit_completions';
   const idField = isCustom ? 'id' : 'habit_id';
 
@@ -53,8 +55,15 @@ const wasHabitCompletedToday = async (habitId: number, userId: string, isCustom:
 
   if (!data?.updated_at) return false;
 
-  const lastUpdateDate = new Date(data.updated_at).toISOString().split('T')[0];
-  return lastUpdateDate === today;
+  const lastUpdate = new Date(data.updated_at);
+  lastUpdate.setHours(0, 0, 0, 0);
+  
+  return lastUpdate.getTime() === today.getTime();
+};
+
+const isNewYear = () => {
+  const now = new Date();
+  return now.getMonth() === 0 && now.getDate() === 1;
 };
 
 export const updateDefaultHabit = async (
@@ -64,6 +73,12 @@ export const updateDefaultHabit = async (
   completedDays: number,
   progress: number
 ) => {
+  // Se for primeiro dia do ano, reseta a contagem
+  if (isNewYear()) {
+    completedDays = completed ? 1 : 0;
+    progress = completed ? (1/365) * 100 : 0;
+  }
+  
   // Se estiver tentando marcar como concluído, verifica primeiro
   if (completed) {
     const alreadyCompletedToday = await wasHabitCompletedToday(habitId, userId, false);
@@ -103,12 +118,18 @@ export const updateCustomHabit = async (
   // Primeiro, busca o user_id do hábito
   const { data: habitData } = await supabase
     .from('custom_habits')
-    .select('user_id')
+    .select('user_id, created_at')
     .eq('id', habitId)
     .single();
 
   if (!habitData) {
     throw new Error('Hábito não encontrado');
+  }
+
+  // Se for primeiro dia do ano, reseta a contagem
+  if (isNewYear()) {
+    completedDays = completed ? 1 : 0;
+    progress = completed ? (1/365) * 100 : 0;
   }
 
   // Se estiver tentando marcar como concluído, verifica primeiro
