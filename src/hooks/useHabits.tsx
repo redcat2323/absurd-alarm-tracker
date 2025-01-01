@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
 import { calculateAnnualProgress } from "@/utils/habitProgress";
@@ -31,7 +30,9 @@ export const useHabits = (userId: string | undefined): HabitState => {
         const newProgress = calculateAnnualProgress(newCompletedDays);
         console.log('Updating custom habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
 
-        await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
+        const result = await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
+        if (result === null) return; // Hábito já foi concluído hoje
+        
         await originalRefetchCustomHabits();
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
@@ -47,13 +48,15 @@ export const useHabits = (userId: string | undefined): HabitState => {
         const newProgress = calculateAnnualProgress(newCompletedDays);
         console.log('Updating default habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
 
-        await updateDefaultHabit(
+        const result = await updateDefaultHabit(
           userId,
           id,
           !habitToUpdate.completed,
           newCompletedDays,
           newProgress
         );
+        
+        if (result === null) return; // Hábito já foi concluído hoje
         
         await refetchDefaultHabits();
       }
