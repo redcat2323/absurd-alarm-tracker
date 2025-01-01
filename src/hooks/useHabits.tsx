@@ -111,7 +111,7 @@ export const useHabits = (userId: string | undefined) => {
 
         await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
         await refetchCustomHabits();
-        await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
+        queryClient.invalidateQueries({ queryKey: ['customHabits'] });
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
         if (!habitToUpdate) {
@@ -126,7 +126,7 @@ export const useHabits = (userId: string | undefined) => {
         const newProgress = calculateAnnualProgress(newCompletedDays);
         console.log('Updating default habit with:', { completed: !habitToUpdate.completed, completedDays: newCompletedDays, progress: newProgress });
 
-        const result = await updateDefaultHabit(
+        await updateDefaultHabit(
           userId,
           id,
           !habitToUpdate.completed,
@@ -134,11 +134,13 @@ export const useHabits = (userId: string | undefined) => {
           newProgress
         );
         
-        console.log('Update result:', result);
-        
         await refetchDefaultHabits();
-        await queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
+        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions'] });
       }
+
+      // Força uma atualização imediata dos dados
+      queryClient.resetQueries({ queryKey: ['defaultHabitCompletions', userId] });
+      queryClient.resetQueries({ queryKey: ['customHabits', userId] });
 
       toast({
         title: "Hábito atualizado!",
@@ -158,7 +160,7 @@ export const useHabits = (userId: string | undefined) => {
     try {
       await deleteCustomHabit(id);
       await refetchCustomHabits();
-      await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
+      queryClient.invalidateQueries({ queryKey: ['customHabits'] });
       
       toast({
         title: "Hábito removido",

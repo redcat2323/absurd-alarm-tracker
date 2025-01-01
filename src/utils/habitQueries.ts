@@ -41,7 +41,6 @@ export const updateDefaultHabit = async (
 ) => {
   console.log('Updating default habit:', { userId, habitId, completed, completedDays, progress });
   
-  // Primeiro, verificamos se já existe um registro
   const { data: existingData, error: fetchError } = await supabase
     .from('default_habit_completions')
     .select('*')
@@ -56,7 +55,6 @@ export const updateDefaultHabit = async (
 
   let result;
   if (!existingData) {
-    // Se não existe, inserimos um novo registro
     result = await supabase
       .from('default_habit_completions')
       .insert([{
@@ -65,9 +63,10 @@ export const updateDefaultHabit = async (
         completed,
         completed_days: completedDays,
         progress
-      }]);
+      }])
+      .select()
+      .single();
   } else {
-    // Se existe, atualizamos o registro existente
     result = await supabase
       .from('default_habit_completions')
       .update({
@@ -76,7 +75,9 @@ export const updateDefaultHabit = async (
         progress
       })
       .eq('user_id', userId)
-      .eq('habit_id', habitId);
+      .eq('habit_id', habitId)
+      .select()
+      .single();
   }
 
   if (result.error) {
@@ -101,7 +102,9 @@ export const updateCustomHabit = async (
       completed_days: completedDays,
       progress
     })
-    .eq('id', habitId);
+    .eq('id', habitId)
+    .select()
+    .single();
 
   if (error) {
     console.error('Error updating custom habit:', error);
