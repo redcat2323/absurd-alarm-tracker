@@ -17,7 +17,6 @@ export type Database = {
           id: number
           progress: number | null
           title: string
-          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -27,7 +26,6 @@ export type Database = {
           id?: number
           progress?: number | null
           title: string
-          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -37,7 +35,6 @@ export type Database = {
           id?: number
           progress?: number | null
           title?: string
-          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -71,7 +68,6 @@ export type Database = {
           habit_id: number
           id: number
           progress: number | null
-          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -81,7 +77,6 @@ export type Database = {
           habit_id: number
           id?: number
           progress?: number | null
-          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -91,7 +86,6 @@ export type Database = {
           habit_id?: number
           id?: number
           progress?: number | null
-          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

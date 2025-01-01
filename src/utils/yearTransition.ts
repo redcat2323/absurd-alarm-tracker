@@ -31,21 +31,5 @@ export const resetAnnualProgress = async (userId: string) => {
 
 export const shouldResetProgress = () => {
   const now = new Date();
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  startOfYear.setHours(0, 0, 0, 0);
-  
-  // Check if we're in the first hour of the year
-  const isFirstHourOfYear = now.getTime() - startOfYear.getTime() < 3600000;
-  
-  // Get stored last reset year from localStorage
-  const lastResetYear = localStorage.getItem('lastHabitResetYear');
-  const currentYear = now.getFullYear().toString();
-  
-  // If it's the first hour of the year and we haven't reset yet for this year
-  if (isFirstHourOfYear && lastResetYear !== currentYear) {
-    localStorage.setItem('lastHabitResetYear', currentYear);
-    return true;
-  }
-  
-  return false;
+  return now.getMonth() === 0 && now.getDate() === 1;
 };
