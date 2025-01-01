@@ -54,8 +54,7 @@ export const useHabits = (userId: string | undefined) => {
     enabled: !!userId,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 0
+    staleTime: 0
   });
 
   const { data: customHabits, refetch: refetchCustomHabits } = useQuery({
@@ -70,8 +69,7 @@ export const useHabits = (userId: string | undefined) => {
     enabled: !!userId,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0,
-    gcTime: 0
+    staleTime: 0
   });
 
   useEffect(() => {
@@ -111,7 +109,6 @@ export const useHabits = (userId: string | undefined) => {
 
         await updateCustomHabit(id, !habitToUpdate.completed, newCompletedDays, newProgress);
         await refetchCustomHabits();
-        queryClient.invalidateQueries({ queryKey: ['customHabits'] });
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
         if (!habitToUpdate) {
@@ -135,12 +132,11 @@ export const useHabits = (userId: string | undefined) => {
         );
         
         await refetchDefaultHabits();
-        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions'] });
       }
 
-      // Força uma atualização imediata dos dados
-      queryClient.resetQueries({ queryKey: ['defaultHabitCompletions', userId] });
-      queryClient.resetQueries({ queryKey: ['customHabits', userId] });
+      // Força atualização imediata
+      await queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
+      await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
 
       toast({
         title: "Hábito atualizado!",
@@ -160,7 +156,7 @@ export const useHabits = (userId: string | undefined) => {
     try {
       await deleteCustomHabit(id);
       await refetchCustomHabits();
-      queryClient.invalidateQueries({ queryKey: ['customHabits'] });
+      await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
       
       toast({
         title: "Hábito removido",

@@ -46,9 +46,9 @@ export const updateDefaultHabit = async (
     .select('*')
     .eq('user_id', userId)
     .eq('habit_id', habitId)
-    .single();
+    .maybeSingle();
 
-  if (fetchError && fetchError.code !== 'PGRST116') {
+  if (fetchError) {
     console.error('Error checking existing habit:', fetchError);
     throw fetchError;
   }
@@ -85,6 +85,7 @@ export const updateDefaultHabit = async (
     throw result.error;
   }
 
+  console.log('Default habit updated successfully:', result.data);
   return result.data;
 };
 
