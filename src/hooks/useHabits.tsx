@@ -5,6 +5,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Book, Droplets, Moon, Sun, Timer } from "lucide-react";
 import { CustomHabit, DefaultHabit } from "@/types/habits";
 import { getDaysInCurrentYear } from "@/utils/dateUtils";
+import { resetAnnualProgress, shouldResetProgress } from "@/utils/yearTransition";
 
 const DEFAULT_HABITS = [
   { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" /> },
@@ -17,6 +18,39 @@ const DEFAULT_HABITS = [
 export const useHabits = (userId: string | undefined) => {
   const queryClient = useQueryClient();
   const [habits, setHabits] = useState<DefaultHabit[]>([]);
+  const [lastResetDate, setLastResetDate] = useState<string>('');
+
+  // Check for year transition and midnight reset
+  useEffect(() => {
+    if (!userId) return;
+
+    const checkAndResetHabits = async () => {
+      const today = new Date();
+      const currentDate = today.toISOString().split('T')[0];
+      
+      // Reset at midnight
+      if (lastResetDate !== currentDate) {
+        await resetDailyHabits(userId);
+        setLastResetDate(currentDate);
+      }
+
+      // Reset for new year
+      if (shouldResetProgress()) {
+        await resetAnnualProgress(userId);
+        queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
+        queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
+        toast({
+          title: "Novo Ano!",
+          description: "Seus hábitos foram resetados para o novo ano.",
+        });
+      }
+    };
+
+    const resetInterval = setInterval(checkAndResetHabits, 60000); // Check every minute
+    checkAndResetHabits(); // Initial check
+
+    return () => clearInterval(resetInterval);
+  }, [userId, lastResetDate, queryClient]);
 
   // Fetch default habits with caching
   const { data: defaultHabitCompletions } = useQuery({
@@ -44,7 +78,7 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
     enabled: !!userId,
   });
 
@@ -62,6 +96,27 @@ export const useHabits = (userId: string | undefined) => {
       setHabits(habitsWithCompletions);
     }
   }, [defaultHabitCompletions]);
+
+  const resetDailyHabits = async (userId: string) => {
+    try {
+      // Reset default habits
+      await supabase
+        .from('default_habit_completions')
+        .update({ completed: false })
+        .eq('user_id', userId);
+
+      // Reset custom habits
+      await supabase
+        .from('custom_habits')
+        .update({ completed: false })
+        .eq('user_id', userId);
+
+      queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
+      queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
+    } catch (error) {
+      console.error('Error resetting daily habits:', error);
+    }
+  };
 
   const calculateAnnualProgress = (completedDays: number) => {
     const daysInYear = getDaysInCurrentYear();
