@@ -83,14 +83,14 @@ export const useHabits = (userId: string | undefined) => {
         const habitToUpdate = customHabits?.find(h => h.id === id);
         if (!habitToUpdate) return;
 
-        await updateCustomHabit(habitToUpdate, !habitToUpdate.completed);
+        await updateCustomHabit(habitToUpdate, true);
         await recordDailyCompletion(userId, id, true);
         await refetchCustomHabits();
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
         if (!habitToUpdate) return;
 
-        await updateDefaultHabit(userId, habitToUpdate, !habitToUpdate.completed);
+        await updateDefaultHabit(userId, habitToUpdate, true);
         await recordDailyCompletion(userId, id, false);
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
       }

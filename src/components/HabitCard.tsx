@@ -62,16 +62,15 @@ export const HabitCard = ({
       <p className="text-sm text-muted-foreground mt-2 mb-4">
         {progress.toFixed(2)}% completo • {completedDays}/{totalDaysInYear} dias
       </p>
-      <Button 
-        variant={completed ? "outline" : "default"}
-        className={cn(
-          "w-full",
-          completed && "border-emerald-500 text-emerald-500 hover:bg-emerald-500/10"
-        )}
-        onClick={onClick}
-      >
-        {completed ? "Concluída" : "Marcar como concluída"}
-      </Button>
+      {!completed && (
+        <Button 
+          variant="default"
+          className="w-full"
+          onClick={onClick}
+        >
+          Marcar como concluída
+        </Button>
+      )}
     </Card>
   );
 };
