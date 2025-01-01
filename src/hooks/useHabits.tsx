@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Book, Droplets, Moon, Sun, Timer } from "lucide-react";
 import { CustomHabit, DefaultHabit } from "@/types/habits";
-import { getDaysInCurrentYear } from "@/utils/dateUtils";
+import { checkDailyCompletion, recordDailyCompletion } from "@/services/habitCompletions";
+import { updateCustomHabit, updateDefaultHabit } from "@/services/habitUpdates";
 
 const DEFAULT_HABITS = [
   { id: 1, title: "Tocar o Terror na Terra - 4h59", icon: <Timer className="w-6 h-6" /> },
@@ -29,7 +30,7 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
     enabled: !!userId,
   });
 
@@ -44,7 +45,7 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
     enabled: !!userId,
   });
 
@@ -63,43 +64,11 @@ export const useHabits = (userId: string | undefined) => {
     }
   }, [defaultHabitCompletions]);
 
-  const calculateAnnualProgress = (completedDays: number) => {
-    const daysInYear = getDaysInCurrentYear();
-    return Number(((completedDays / daysInYear) * 100).toFixed(2));
-  };
-
-  const checkDailyCompletion = async (habitId: number, isCustom: boolean) => {
-    const today = new Date().toISOString().split('T')[0];
-    
-    const { data: existingCompletion } = await supabase
-      .from('habit_daily_completions')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('habit_id', habitId)
-      .eq('is_custom_habit', isCustom)
-      .eq('completion_date', today)
-      .single();
-
-    return existingCompletion;
-  };
-
-  const recordDailyCompletion = async (habitId: number, isCustom: boolean) => {
-    const { error } = await supabase
-      .from('habit_daily_completions')
-      .insert([{
-        user_id: userId,
-        habit_id: habitId,
-        is_custom_habit: isCustom
-      }]);
-
-    if (error) throw error;
-  };
-
   const toggleHabit = async (id: number, isCustom: boolean = false) => {
     if (!userId) return;
 
     try {
-      const existingCompletion = await checkDailyCompletion(id, isCustom);
+      const existingCompletion = await checkDailyCompletion(userId, id, isCustom);
       
       if (existingCompletion) {
         toast({
@@ -114,68 +83,22 @@ export const useHabits = (userId: string | undefined) => {
         const habitToUpdate = customHabits?.find(h => h.id === id);
         if (!habitToUpdate) return;
 
-        const newCompletedDays = habitToUpdate.completed ? 
-          habitToUpdate.completed_days - 1 : 
-          habitToUpdate.completed_days + 1;
-        
-        const newProgress = calculateAnnualProgress(newCompletedDays);
-
-        const { error } = await supabase
-          .from('custom_habits')
-          .update({
-            completed: !habitToUpdate.completed,
-            completed_days: newCompletedDays,
-            progress: newProgress
-          })
-          .eq('id', id);
-
-        if (error) throw error;
-
-        if (!habitToUpdate.completed) {
-          await recordDailyCompletion(id, true);
-        }
-
+        await updateCustomHabit(habitToUpdate, !habitToUpdate.completed);
+        await recordDailyCompletion(userId, id, true);
         await refetchCustomHabits();
-
-        toast({
-          title: "Hábito atualizado!",
-          description: "Seu progresso anual foi atualizado.",
-        });
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
         if (!habitToUpdate) return;
 
-        const newCompletedDays = habitToUpdate.completed ? 
-          habitToUpdate.completedDays - 1 : 
-          habitToUpdate.completedDays + 1;
-        
-        const newProgress = calculateAnnualProgress(newCompletedDays);
-
-        const { error } = await supabase
-          .from('default_habit_completions')
-          .upsert({
-            user_id: userId,
-            habit_id: id,
-            completed: !habitToUpdate.completed,
-            completed_days: newCompletedDays,
-            progress: newProgress
-          }, {
-            onConflict: 'user_id,habit_id'
-          });
-
-        if (error) throw error;
-
-        if (!habitToUpdate.completed) {
-          await recordDailyCompletion(id, false);
-        }
-
+        await updateDefaultHabit(userId, habitToUpdate, !habitToUpdate.completed);
+        await recordDailyCompletion(userId, id, false);
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
-
-        toast({
-          title: "Hábito atualizado!",
-          description: "Seu progresso anual foi atualizado.",
-        });
       }
+
+      toast({
+        title: "Hábito atualizado!",
+        description: "Seu progresso anual foi atualizado.",
+      });
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar hábito",
