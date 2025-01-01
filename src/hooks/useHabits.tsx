@@ -30,7 +30,8 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Set to 0 to always refetch
+    cacheTime: 0, // Set to 0 to disable caching
     enabled: !!userId,
   });
 
@@ -45,7 +46,8 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Set to 0 to always refetch
+    cacheTime: 0, // Set to 0 to disable caching
     enabled: !!userId,
   });
 
@@ -56,7 +58,9 @@ export const useHabits = (userId: string | undefined) => {
       if (!userId) return [];
       return getTodayCompletions(userId);
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Set to 0 to always refetch
+    cacheTime: 0, // Set to 0 to disable caching
+    refetchInterval: 1000, // Refetch every second
     enabled: !!userId,
   });
 
@@ -107,10 +111,13 @@ export const useHabits = (userId: string | undefined) => {
 
         await updateDefaultHabit(userId, habitToUpdate, true);
         await recordDailyCompletion(userId, id, false);
+        
+        // Invalidate and refetch all relevant queries
         queryClient.invalidateQueries({ queryKey: ['defaultHabitCompletions', userId] });
+        queryClient.invalidateQueries({ queryKey: ['todayCompletions', userId] });
       }
 
-      // Refetch today's completions to update the UI
+      // Force refetch of today's completions
       await refetchTodayCompletions();
 
       toast({
