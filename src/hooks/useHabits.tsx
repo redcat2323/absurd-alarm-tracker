@@ -6,7 +6,7 @@ import { HabitState } from "@/types/habitTypes";
 import { 
   toggleDefaultHabit, 
   toggleCustomHabit, 
-  deleteCustomHabit as deleteHabitFromDB 
+  deleteCustomHabit 
 } from "@/utils/habitManagement";
 
 export const useHabits = (userId: string | undefined): HabitState => {
@@ -37,7 +37,9 @@ export const useHabits = (userId: string | undefined): HabitState => {
           habitToUpdate.completed_days
         );
         
+        // Se o resultado for null, significa que o hábito já foi concluído hoje
         if (result === null) return;
+        
         await originalRefetchCustomHabits();
       } else {
         const habitToUpdate = habits.find(h => h.id === id);
@@ -53,7 +55,9 @@ export const useHabits = (userId: string | undefined): HabitState => {
           habitToUpdate.completedDays
         );
         
+        // Se o resultado for null, significa que o hábito já foi concluído hoje
         if (result === null) return;
+        
         await refetchDefaultHabits();
       }
 
@@ -74,9 +78,9 @@ export const useHabits = (userId: string | undefined): HabitState => {
     }
   };
 
-  const deleteHabit = async (id: number) => {
+  const handleDeleteHabit = async (id: number) => {
     try {
-      await deleteHabitFromDB(id);
+      await deleteCustomHabit(id);
       await originalRefetchCustomHabits();
       await queryClient.invalidateQueries({ queryKey: ['customHabits', userId] });
       
@@ -102,7 +106,7 @@ export const useHabits = (userId: string | undefined): HabitState => {
     habits,
     customHabits,
     toggleHabit,
-    deleteHabit,
+    deleteHabit: handleDeleteHabit,
     refetchCustomHabits
   };
 };

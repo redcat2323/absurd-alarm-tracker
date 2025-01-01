@@ -33,7 +33,7 @@ export const fetchCustomHabits = async (userId: string) => {
   return data || [];
 };
 
-const checkIfHabitCompletedToday = async (habitId: number, userId: string, isCustom: boolean) => {
+const wasHabitCompletedToday = async (habitId: number, userId: string, isCustom: boolean) => {
   const today = new Date().toISOString().split('T')[0];
   const table = isCustom ? 'custom_habits' : 'default_habit_completions';
   const idField = isCustom ? 'id' : 'habit_id';
@@ -42,7 +42,7 @@ const checkIfHabitCompletedToday = async (habitId: number, userId: string, isCus
     .from(table)
     .select('updated_at, completed')
     .eq(idField, habitId)
-    .eq('user_id', userId)
+    .eq(isCustom ? 'user_id' : 'user_id', userId)
     .eq('completed', true)
     .single();
 
@@ -51,12 +51,10 @@ const checkIfHabitCompletedToday = async (habitId: number, userId: string, isCus
     return false;
   }
 
-  if (data?.updated_at) {
-    const lastUpdateDate = new Date(data.updated_at).toISOString().split('T')[0];
-    return lastUpdateDate === today;
-  }
+  if (!data?.updated_at) return false;
 
-  return false;
+  const lastUpdateDate = new Date(data.updated_at).toISOString().split('T')[0];
+  return lastUpdateDate === today;
 };
 
 export const updateDefaultHabit = async (
@@ -68,7 +66,7 @@ export const updateDefaultHabit = async (
 ) => {
   // Se estiver tentando marcar como concluído, verifica primeiro
   if (completed) {
-    const alreadyCompletedToday = await checkIfHabitCompletedToday(habitId, userId, false);
+    const alreadyCompletedToday = await wasHabitCompletedToday(habitId, userId, false);
     if (alreadyCompletedToday) {
       toast({
         title: "Hábito já concluído",
@@ -115,7 +113,7 @@ export const updateCustomHabit = async (
 
   // Se estiver tentando marcar como concluído, verifica primeiro
   if (completed) {
-    const alreadyCompletedToday = await checkIfHabitCompletedToday(habitId, habitData.user_id, true);
+    const alreadyCompletedToday = await wasHabitCompletedToday(habitId, habitData.user_id, true);
     if (alreadyCompletedToday) {
       toast({
         title: "Hábito já concluído",

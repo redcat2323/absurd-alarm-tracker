@@ -1,6 +1,5 @@
-import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { calculateAnnualProgress } from "@/utils/habitProgress";
+import { updateDefaultHabit, updateCustomHabit, deleteCustomHabit as deleteHabitFromDB } from "@/utils/habitQueries";
 
 export const toggleDefaultHabit = async (
   userId: string,
@@ -48,57 +47,6 @@ export const toggleCustomHabit = async (
   return result;
 };
 
-export const updateDefaultHabit = async (
-  userId: string,
-  habitId: number,
-  completed: boolean,
-  completedDays: number,
-  progress: number
-) => {
-  const { data, error } = await supabase
-    .from('default_habit_completions')
-    .upsert({
-      user_id: userId,
-      habit_id: habitId,
-      completed,
-      completed_days: completedDays,
-      progress,
-      updated_at: new Date().toISOString()
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const updateCustomHabit = async (
-  habitId: number,
-  completed: boolean,
-  completedDays: number,
-  progress: number
-) => {
-  const { data, error } = await supabase
-    .from('custom_habits')
-    .update({
-      completed,
-      completed_days: completedDays,
-      progress,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', habitId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
 export const deleteCustomHabit = async (id: number) => {
-  const { error } = await supabase
-    .from('custom_habits')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
+  await deleteHabitFromDB(id);
 };
