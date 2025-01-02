@@ -15,6 +15,9 @@ const DEFAULT_HABITS = [
   { id: 5, title: "Exercício Diário", icon: <Moon className="w-6 h-6" /> },
 ];
 
+// Intervalo de atualização em milissegundos (30 segundos)
+const REFETCH_INTERVAL = 30000;
+
 export const useHabits = (userId: string | undefined) => {
   const queryClient = useQueryClient();
   const [habits, setHabits] = useState<DefaultHabit[]>([]);
@@ -30,8 +33,8 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: REFETCH_INTERVAL,
+    refetchInterval: REFETCH_INTERVAL,
     enabled: !!userId,
   });
 
@@ -46,8 +49,8 @@ export const useHabits = (userId: string | undefined) => {
         .eq('user_id', userId);
       return data || [];
     },
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: REFETCH_INTERVAL,
+    refetchInterval: REFETCH_INTERVAL,
     enabled: !!userId,
   });
 
@@ -58,9 +61,8 @@ export const useHabits = (userId: string | undefined) => {
       if (!userId) return [];
       return getTodayCompletions(userId);
     },
-    staleTime: 0,
-    gcTime: 0,
-    refetchInterval: 1000,
+    staleTime: REFETCH_INTERVAL,
+    refetchInterval: REFETCH_INTERVAL,
     enabled: !!userId,
   });
 
