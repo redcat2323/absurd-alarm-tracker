@@ -3,6 +3,8 @@ import { AddHabitForm } from "@/components/AddHabitForm";
 import { useHabits } from "@/hooks/useHabits";
 import { useCelebration } from "@/hooks/useCelebration";
 import { CelebrationMessage } from "@/components/CelebrationMessage";
+import { useEffect } from "react";
+import { checkAndResetHabits } from "@/utils/habitReset";
 
 interface HabitsSectionProps {
   userId: string;
@@ -11,6 +13,18 @@ interface HabitsSectionProps {
 export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const { habits, customHabits, toggleHabit, deleteHabit, refetchCustomHabits } = useHabits(userId);
   const { checkAndCelebrate, showCelebration, setShowCelebration } = useCelebration();
+
+  useEffect(() => {
+    // Verifica e reseta os hábitos se necessário
+    checkAndResetHabits(userId);
+    
+    // Configura um intervalo para verificar o reset à meia-noite
+    const interval = setInterval(() => {
+      checkAndResetHabits(userId);
+    }, 60000); // Verifica a cada minuto
+    
+    return () => clearInterval(interval);
+  }, [userId]);
 
   const handleToggleHabit = async (id: number, isCustom?: boolean) => {
     checkAndCelebrate(id, isCustom, habits, customHabits);
