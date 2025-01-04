@@ -1,7 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { zonedTimeToUtc } from "date-fns-tz";
 
 export const checkDailyCompletion = async (userId: string, habitId: number, isCustom: boolean) => {
-  const today = new Date().toISOString().split('T')[0];
+  const timeZone = "America/Sao_Paulo";
+  const now = new Date();
+  const spTime = zonedTimeToUtc(now, timeZone);
+  const today = format(spTime, 'yyyy-MM-dd');
   
   const { data: existingCompletion } = await supabase
     .from('habit_daily_completions')
@@ -16,7 +21,10 @@ export const checkDailyCompletion = async (userId: string, habitId: number, isCu
 };
 
 export const recordDailyCompletion = async (userId: string, habitId: number, isCustom: boolean) => {
-  const today = new Date().toISOString().split('T')[0];
+  const timeZone = "America/Sao_Paulo";
+  const now = new Date();
+  const spTime = zonedTimeToUtc(now, timeZone);
+  const today = format(spTime, 'yyyy-MM-dd');
   
   const { error } = await supabase
     .from('habit_daily_completions')
@@ -31,7 +39,10 @@ export const recordDailyCompletion = async (userId: string, habitId: number, isC
 };
 
 export const getTodayCompletions = async (userId: string) => {
-  const today = new Date().toISOString().split('T')[0];
+  const timeZone = "America/Sao_Paulo";
+  const now = new Date();
+  const spTime = zonedTimeToUtc(now, timeZone);
+  const today = format(spTime, 'yyyy-MM-dd');
   
   const { data: completions } = await supabase
     .from('habit_daily_completions')
