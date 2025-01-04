@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { zonedTimeToUtc } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 export const checkAndResetHabits = async (userId: string) => {
   // Configura o fuso horário de São Paulo
@@ -8,7 +8,7 @@ export const checkAndResetHabits = async (userId: string) => {
   
   // Obtém a data atual no fuso horário de São Paulo
   const now = new Date();
-  const spTime = zonedTimeToUtc(now, timeZone);
+  const spTime = toZonedTime(now, timeZone);
   
   const lastCheck = localStorage.getItem('lastHabitCheck');
   const currentDay = format(spTime, 'yyyy-MM-dd');
