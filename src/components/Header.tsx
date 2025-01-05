@@ -27,15 +27,15 @@ export const Header = ({ userName, dayOfYear }: HeaderProps) => {
         <h2 className="text-lg font-semibold mb-4">Seu Progresso</h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span>+310 dias completados</span>
+            <span>+ de 310 dias completados</span>
             <Check className="w-5 h-5 text-green-500" />
           </div>
           <div className="flex items-center justify-between">
-            <span>+200 dias em andamento</span>
+            <span>+ de 200 dias completados</span>
             <AlertCircle className="w-5 h-5 text-yellow-500" />
           </div>
           <div className="flex items-center justify-between">
-            <span>-199 dias perdidos</span>
+            <span>- de 199 dias completados</span>
             <XCircle className="w-5 h-5 text-red-500" />
           </div>
         </div>
