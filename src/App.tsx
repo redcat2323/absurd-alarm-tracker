@@ -11,29 +11,58 @@ import Admin from "./pages/Admin";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60, // 1 minute
+      refetchOnWindowFocus: true,
+    },
+  },
+});
 
 const App = () => {
   useEffect(() => {
     // Initialize auth state
     const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // Clear any stale data if no valid session exists
-        localStorage.clear();
-        sessionStorage.clear();
+      try {
+        console.log("Iniciando verificação de autenticação...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Erro ao obter sessão:", error);
+          return;
+        }
+
+        if (!session) {
+          console.log("Nenhuma sessão encontrada, limpando dados locais");
+          localStorage.clear();
+          sessionStorage.clear();
+        } else {
+          console.log("Sessão encontrada para usuário:", session.user.email);
+        }
+      } catch (error) {
+        console.error("Erro ao inicializar autenticação:", error);
       }
     };
     
     initAuth();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Mudança no estado de autenticação:", event);
+      
       if (event === 'SIGNED_IN' && session) {
+        console.log("Usuário logado:", session.user.email);
         localStorage.setItem('supabase.auth.token', session.access_token);
+        // Força um recarregamento dos dados após o login
+        queryClient.invalidateQueries();
       } else if (event === 'SIGNED_OUT') {
+        console.log("Usuário deslogado, limpando dados");
         localStorage.clear();
         sessionStorage.clear();
+        // Limpa o cache do React Query
+        queryClient.clear();
       }
     });
 
