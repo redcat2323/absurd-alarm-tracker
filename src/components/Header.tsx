@@ -24,7 +24,7 @@ export const Header = ({ userName, dayOfYear }: HeaderProps) => {
       </div>
 
       <div className="bg-card p-4 rounded-lg shadow-sm max-w-md mx-auto">
-        <h2 className="text-lg font-semibold mb-4">Seu Progresso</h2>
+        <h2 className="text-lg font-semibold mb-4">Meta Anual Sugerida</h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span>+ de 310 dias completados</span>
