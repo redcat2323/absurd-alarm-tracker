@@ -13,8 +13,12 @@ export const useWeeklyBook = () => {
 
   const fetchWeeklyBook = async () => {
     const now = new Date();
-    const brazilianDate = new Date(formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd'));
-    const weekStart = startOfWeek(brazilianDate, { weekStartsOn: 0 }).toISOString().split("T")[0];
+    const brazilianDate = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
+    const weekStart = formatInTimeZone(
+      startOfWeek(new Date(brazilianDate), { weekStartsOn: 0 }), 
+      TIMEZONE, 
+      'yyyy-MM-dd'
+    );
     
     console.log('Data atual (Brasília):', brazilianDate);
     console.log('Início da semana (domingo):', weekStart);
@@ -31,14 +35,13 @@ export const useWeeklyBook = () => {
     }
 
     console.log('Livro da semana encontrado:', data);
-    if (data) {
-      setBook(data);
-    }
+    setBook(data);
   };
 
   useEffect(() => {
     fetchWeeklyBook();
 
+    // Atualiza à meia-noite para caso mude a semana
     const interval = setInterval(() => {
       const now = new Date();
       if (now.getHours() === 0 && now.getMinutes() === 0) {
