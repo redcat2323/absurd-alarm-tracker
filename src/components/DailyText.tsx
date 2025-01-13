@@ -4,13 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatInTimeZone } from 'date-fns-tz';
 
 type DailyText = Database["public"]["Tables"]["daily_texts"]["Row"];
 
 const REFETCH_INTERVAL = 30000; // 30 segundos
+const TIMEZONE = 'America/Sao_Paulo';
 
 export const DailyText = () => {
-  const today = new Date().toISOString().split('T')[0];
+  // Usar formatInTimeZone para obter a data correta no fuso horário de Brasília
+  const today = formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM-dd');
   
   const { data: dailyText } = useQuery({
     queryKey: ['dailyText', today],
@@ -35,7 +38,7 @@ export const DailyText = () => {
     refetchInterval: REFETCH_INTERVAL,
   });
 
-  const formattedDate = format(new Date(), "dd 'de' MMMM", { locale: ptBR });
+  const formattedDate = formatInTimeZone(new Date(), TIMEZONE, "dd 'de' MMMM", { locale: ptBR });
 
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/5">

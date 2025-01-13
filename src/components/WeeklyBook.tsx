@@ -4,19 +4,22 @@ import { Book, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
+import { formatInTimeZone } from 'date-fns-tz';
+import { startOfWeek } from 'date-fns';
 
 type WeeklyBook = Database["public"]["Tables"]["weekly_books"]["Row"];
+
+const TIMEZONE = 'America/Sao_Paulo';
 
 export const WeeklyBook = () => {
   const [book, setBook] = useState<WeeklyBook | null>(null);
 
   useEffect(() => {
     const fetchWeeklyBook = async () => {
-      // Obter o domingo da semana atual
-      const today = new Date();
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay());
-      const weekStart = startOfWeek.toISOString().split("T")[0];
+      // Obter o domingo da semana atual considerando o fuso horário de Brasília
+      const now = new Date();
+      const brazilianDate = new Date(formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd'));
+      const weekStart = startOfWeek(brazilianDate).toISOString().split("T")[0];
       
       console.log('Buscando livro da semana para a data:', weekStart);
       
