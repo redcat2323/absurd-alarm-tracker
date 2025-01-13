@@ -21,7 +21,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     celebrationMessage,
     celebrate 
   } = useCelebration();
-  const { achievements, unlockAchievement } = useAchievements(userId);
+  const { achievements, unlockAchievement, userAchievements } = useAchievements(userId);
 
   useEffect(() => {
     checkAndResetHabits(userId);
@@ -48,18 +48,28 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     );
 
     for (const achievement of categoryAchievements) {
-      if (habit.completed_days >= achievement.requirement_value) {
+      // Check if achievement is not already unlocked
+      const isUnlocked = userAchievements?.some(
+        ua => ua.achievement_id === achievement.id
+      );
+
+      if (!isUnlocked && habit.completed_days >= achievement.requirement_value) {
         await unlockAchievement(achievement.id);
-        celebrate("achievement");
+        celebrate("achievement", `Conquista desbloqueada: ${achievement.title}`);
       }
     }
 
     // Check streak achievements
     const streakAchievements = achievements.filter(a => a.type === 'streak');
     for (const achievement of streakAchievements) {
-      if (habit.completed_days >= achievement.requirement_value) {
+      // Check if achievement is not already unlocked
+      const isUnlocked = userAchievements?.some(
+        ua => ua.achievement_id === achievement.id
+      );
+
+      if (!isUnlocked && habit.completed_days >= achievement.requirement_value) {
         await unlockAchievement(achievement.id);
-        celebrate("milestone");
+        celebrate("milestone", `Marco alcançado: ${achievement.title}`);
       }
     }
   };

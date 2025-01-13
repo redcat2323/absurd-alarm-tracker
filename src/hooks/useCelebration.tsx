@@ -30,16 +30,16 @@ export const useCelebration = () => {
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
-  const celebrate = (type: "daily" | "achievement" | "milestone") => {
+  const celebrate = (type: "daily" | "achievement" | "milestone", customMessage?: string) => {
     // Evita múltiplas celebrações simultâneas
     if (showCelebration) return;
 
-    const message = getRandomMessage(type);
+    const message = customMessage || getRandomMessage(type);
     setCelebrationType(type);
     setCelebrationMessage(message);
     setShowCelebration(true);
 
-    // Apenas mostra o toast para conquistas e marcos importantes
+    // Mostra o toast para conquistas e marcos importantes
     if (type !== "daily") {
       toast({
         title: message,
