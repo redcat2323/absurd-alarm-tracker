@@ -12,16 +12,17 @@ export const useWeeklyBook = () => {
   const [book, setBook] = useState<WeeklyBook | null>(null);
 
   const fetchWeeklyBook = async () => {
+    // Pega a data atual em UTC
     const now = new Date();
-    const brazilianDate = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
-    const weekStart = formatInTimeZone(
-      startOfWeek(new Date(brazilianDate), { weekStartsOn: 0 }), 
-      TIMEZONE, 
-      'yyyy-MM-dd'
-    );
     
+    // Converte para data em Brasília
+    const brazilianDate = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
     console.log('Data atual (Brasília):', brazilianDate);
-    console.log('Início da semana (domingo):', weekStart);
+    
+    // Encontra o domingo (início) da semana atual
+    const currentWeekStart = startOfWeek(new Date(brazilianDate), { weekStartsOn: 0 });
+    const weekStart = formatInTimeZone(currentWeekStart, TIMEZONE, 'yyyy-MM-dd');
+    console.log('Início da semana atual (domingo):', weekStart);
     
     const { data, error } = await supabase
       .from("weekly_books")
