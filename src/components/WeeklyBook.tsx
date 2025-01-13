@@ -1,87 +1,10 @@
-import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Book, FileText } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
-import { Button } from "@/components/ui/button";
-import { formatInTimeZone } from 'date-fns-tz';
-import { startOfWeek } from 'date-fns';
-
-type WeeklyBook = Database["public"]["Tables"]["weekly_books"]["Row"];
-
-const TIMEZONE = 'America/Sao_Paulo';
+import { Book } from "lucide-react";
+import { useWeeklyBook } from "@/hooks/useWeeklyBook";
+import { PDFDownloadButton } from "@/components/PDFDownloadButton";
 
 export const WeeklyBook = () => {
-  const [book, setBook] = useState<WeeklyBook | null>(null);
-
-  useEffect(() => {
-    const fetchWeeklyBook = async () => {
-      // Obter a data atual no fuso horário de Brasília
-      const now = new Date();
-      const brazilianDate = new Date(formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd'));
-      
-      // Encontrar o domingo (início) da semana atual
-      const weekStart = startOfWeek(brazilianDate, { weekStartsOn: 0 }).toISOString().split("T")[0];
-      
-      console.log('Data atual (Brasília):', brazilianDate);
-      console.log('Início da semana (domingo):', weekStart);
-      
-      const { data, error } = await supabase
-        .from("weekly_books")
-        .select()
-        .eq("week_start", weekStart)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Erro ao buscar livro da semana:', error);
-        return;
-      }
-
-      console.log('Livro da semana encontrado:', data);
-      if (data) {
-        setBook(data);
-      }
-    };
-
-    fetchWeeklyBook();
-
-    // Atualizar o livro à meia-noite de cada dia
-    const interval = setInterval(() => {
-      const now = new Date();
-      if (now.getHours() === 0 && now.getMinutes() === 0) {
-        fetchWeeklyBook();
-      }
-    }, 60000); // Verificar a cada minuto
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleDownloadPDF = async () => {
-    if (book?.pdf_url) {
-      try {
-        const fileName = book.pdf_url.split('/').pop();
-        if (!fileName) return;
-
-        console.log('Iniciando download do PDF:', fileName);
-
-        const { data, error } = await supabase.storage
-          .from('book_files')
-          .download(fileName);
-
-        if (error) {
-          console.error('Erro ao baixar o PDF:', error);
-          return;
-        }
-
-        const url = URL.createObjectURL(data);
-        window.open(url, '_blank');
-
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      } catch (error) {
-        console.error('Erro ao processar o PDF:', error);
-      }
-    }
-  };
+  const { book } = useWeeklyBook();
 
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/5">
@@ -107,16 +30,7 @@ export const WeeklyBook = () => {
                 dangerouslySetInnerHTML={{ __html: book.description }}
               />
             )}
-            {book.pdf_url && (
-              <Button
-                variant="outline"
-                className="flex items-center gap-2"
-                onClick={handleDownloadPDF}
-              >
-                <FileText className="w-4 h-4" />
-                Baixar PDF
-              </Button>
-            )}
+            {book.pdf_url && <PDFDownloadButton pdfUrl={book.pdf_url} />}
           </div>
         </div>
       ) : (
