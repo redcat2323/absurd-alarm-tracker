@@ -73,6 +73,7 @@ export const useCelebration = () => {
     showCelebration, 
     setShowCelebration,
     celebrationType,
-    celebrationMessage 
+    celebrationMessage,
+    celebrate 
   };
 };
