@@ -5,6 +5,7 @@ import { WeeklyBook } from "@/components/WeeklyBook";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { HabitsSection } from "@/components/HabitsSection";
+import { AchievementsSection } from "@/components/AchievementsSection";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -55,7 +56,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto space-y-8">
         <Header userName={userName} dayOfYear={dayOfYear} />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -63,11 +64,15 @@ const Index = () => {
             <HabitsSection userId={userId} />
           )}
           
-          <div className="space-y-4">
+          <div className="space-y-8">
             <DailyText />
             <WeeklyBook />
           </div>
         </div>
+
+        {userId && (
+          <AchievementsSection userId={userId} />
+        )}
       </div>
     </div>
   );
