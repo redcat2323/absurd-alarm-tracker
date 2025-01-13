@@ -16,12 +16,15 @@ export const WeeklyBook = () => {
 
   useEffect(() => {
     const fetchWeeklyBook = async () => {
-      // Obter o domingo da semana atual considerando o fuso horário de Brasília
+      // Obter a data atual no fuso horário de Brasília
       const now = new Date();
       const brazilianDate = new Date(formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd'));
-      const weekStart = startOfWeek(brazilianDate).toISOString().split("T")[0];
       
-      console.log('Buscando livro da semana para a data:', weekStart);
+      // Encontrar o domingo (início) da semana atual
+      const weekStart = startOfWeek(brazilianDate, { weekStartsOn: 0 }).toISOString().split("T")[0];
+      
+      console.log('Data atual (Brasília):', brazilianDate);
+      console.log('Início da semana (domingo):', weekStart);
       
       const { data, error } = await supabase
         .from("weekly_books")
@@ -41,12 +44,21 @@ export const WeeklyBook = () => {
     };
 
     fetchWeeklyBook();
+
+    // Atualizar o livro à meia-noite de cada dia
+    const interval = setInterval(() => {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        fetchWeeklyBook();
+      }
+    }, 60000); // Verificar a cada minuto
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleDownloadPDF = async () => {
     if (book?.pdf_url) {
       try {
-        // Extrair apenas o nome do arquivo da URL completa
         const fileName = book.pdf_url.split('/').pop();
         if (!fileName) return;
 
@@ -61,11 +73,9 @@ export const WeeklyBook = () => {
           return;
         }
 
-        // Criar um URL temporário para o blob e abrir em uma nova aba
         const url = URL.createObjectURL(data);
         window.open(url, '_blank');
 
-        // Limpar o URL do blob após um breve delay
         setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch (error) {
         console.error('Erro ao processar o PDF:', error);
