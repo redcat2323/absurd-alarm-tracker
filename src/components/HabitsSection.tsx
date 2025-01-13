@@ -41,7 +41,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     );
 
     for (const achievement of categoryAchievements) {
-      if (habit.completedDays >= achievement.requirement_value) {
+      if (habit.completed_days >= achievement.requirement_value) {
         await unlockAchievement(achievement.id);
       }
     }
@@ -49,8 +49,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     // Check streak achievements
     const streakAchievements = achievements.filter(a => a.type === 'streak');
     for (const achievement of streakAchievements) {
-      // Assuming consecutive days are tracked in completedDays
-      if (habit.completedDays >= achievement.requirement_value) {
+      if (habit.completed_days >= achievement.requirement_value) {
         await unlockAchievement(achievement.id);
       }
     }

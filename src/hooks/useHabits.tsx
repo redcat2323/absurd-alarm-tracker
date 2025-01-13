@@ -77,7 +77,7 @@ export const useHabits = (userId: string | undefined) => {
         return {
           ...habit,
           completed: completedToday,
-          completedDays: completion?.completed_days || 0,
+          completed_days: completion?.completed_days || 0,
           progress: completion?.progress || 0,
         };
       });
