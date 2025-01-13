@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { formatInTimeZone } from 'date-fns-tz';
-import { startOfWeek } from 'date-fns';
+import { startOfWeek, parseISO } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -18,10 +18,10 @@ export const useWeeklyBook = () => {
       const brazilianDate = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
       console.log('Data atual (Brasília):', brazilianDate);
       
+      // Converte a string da data para objeto Date
+      const brazilianDateObj = parseISO(brazilianDate);
+      
       // Encontra o domingo da semana atual
-      // Importante: não precisamos converter para UTC porque queremos o domingo
-      // baseado na data local em Brasília
-      const brazilianDateObj = new Date(brazilianDate);
       const weekStart = formatInTimeZone(
         startOfWeek(brazilianDateObj, { weekStartsOn: 0 }),
         TIMEZONE,
@@ -30,10 +30,18 @@ export const useWeeklyBook = () => {
       
       console.log('Data de início da semana (domingo):', weekStart);
       
+      // Busca o livro que tem week_start maior ou igual à data atual
+      // e menor que a próxima semana
       const { data, error } = await supabase
         .from("weekly_books")
         .select()
-        .eq("week_start", weekStart)
+        .gte("week_start", weekStart)
+        .lt("week_start", formatInTimeZone(
+          new Date(brazilianDateObj.getTime() + 7 * 24 * 60 * 60 * 1000),
+          TIMEZONE,
+          'yyyy-MM-dd'
+        ))
+        .order('week_start', { ascending: true })
         .maybeSingle();
 
       if (error) {
