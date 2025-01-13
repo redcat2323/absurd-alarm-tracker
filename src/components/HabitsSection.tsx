@@ -13,7 +13,13 @@ interface HabitsSectionProps {
 
 export const HabitsSection = ({ userId }: HabitsSectionProps) => {
   const { habits, customHabits, toggleHabit, deleteHabit, refetchCustomHabits } = useHabits(userId);
-  const { checkAndCelebrate, showCelebration, setShowCelebration } = useCelebration();
+  const { 
+    checkAndCelebrate, 
+    showCelebration, 
+    setShowCelebration,
+    celebrationType,
+    celebrationMessage 
+  } = useCelebration();
   const { achievements, unlockAchievement } = useAchievements(userId);
 
   useEffect(() => {
@@ -43,6 +49,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     for (const achievement of categoryAchievements) {
       if (habit.completed_days >= achievement.requirement_value) {
         await unlockAchievement(achievement.id);
+        celebrate("achievement");
       }
     }
 
@@ -51,6 +58,7 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     for (const achievement of streakAchievements) {
       if (habit.completed_days >= achievement.requirement_value) {
         await unlockAchievement(achievement.id);
+        celebrate("milestone");
       }
     }
   };
@@ -69,7 +77,9 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     <div className="space-y-4">
       <CelebrationMessage 
         show={showCelebration} 
-        onClose={() => setShowCelebration(false)} 
+        onClose={() => setShowCelebration(false)}
+        type={celebrationType}
+        message={celebrationMessage}
       />
       
       <HabitList

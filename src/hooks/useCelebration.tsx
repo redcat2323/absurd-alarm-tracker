@@ -1,18 +1,46 @@
 import { toast } from "@/components/ui/use-toast";
-import confetti from "canvas-confetti";
 import { DefaultHabit, CustomHabit } from "@/types/habits";
 import { useState } from "react";
 
-const CELEBRATION_MESSAGES = [
-  "🌟 Incrível! Você completou todos os hábitos hoje!",
-  "🎉 Que dia produtivo! Continue assim!",
-  "💪 Você está arrasando! Mantenha o foco!",
-  "🏆 Excelente trabalho! Você é um exemplo!",
-  "⭐ Sensacional! Sua dedicação é inspiradora!"
-];
+const CELEBRATION_MESSAGES = {
+  daily: [
+    "🌟 Incrível! Você completou todos os hábitos hoje!",
+    "🎉 Que dia produtivo! Continue assim!",
+    "💪 Você está arrasando! Mantenha o foco!",
+  ],
+  achievement: [
+    "🏆 Nova conquista desbloqueada! Você é incrível!",
+    "⭐ Parabéns pela conquista! Continue evoluindo!",
+    "🌟 Mais uma conquista para sua coleção!",
+  ],
+  milestone: [
+    "🎯 Marco importante alcançado! Você é inspirador!",
+    "🚀 Uau! Você atingiu um marco incrível!",
+    "💫 Que conquista extraordinária! Continue brilhando!",
+  ],
+};
 
 export const useCelebration = () => {
   const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationType, setCelebrationType] = useState<"daily" | "achievement" | "milestone">("daily");
+  const [celebrationMessage, setCelebrationMessage] = useState("");
+
+  const getRandomMessage = (type: "daily" | "achievement" | "milestone") => {
+    const messages = CELEBRATION_MESSAGES[type];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  const celebrate = (type: "daily" | "achievement" | "milestone") => {
+    const message = getRandomMessage(type);
+    setCelebrationType(type);
+    setCelebrationMessage(message);
+    setShowCelebration(true);
+
+    toast({
+      title: message,
+      className: "animate-bounce",
+    });
+  };
 
   const checkAndCelebrate = (
     habitId: number,
@@ -34,47 +62,17 @@ export const useCelebration = () => {
         habit.id === habitId ? !habit.completed : habit.completed
       ) ?? true;
 
-      const willAllBeCompleted = defaultHabitsCompleted && customHabitsCompleted;
-
-      if (willAllBeCompleted) {
-        celebrate();
+      if (defaultHabitsCompleted && customHabitsCompleted) {
+        celebrate("daily");
       }
     }
   };
 
-  const celebrate = () => {
-    const randomMessage = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
-    toast({
-      title: randomMessage,
-      className: "animate-bounce",
-    });
-
-    setShowCelebration(true);
-
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#9b87f5', '#7E69AB', '#D946EF'],
-    });
-
-    setTimeout(() => {
-      confetti({
-        particleCount: 50,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: ['#9b87f5', '#7E69AB', '#D946EF'],
-      });
-      confetti({
-        particleCount: 50,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: ['#9b87f5', '#7E69AB', '#D946EF'],
-      });
-    }, 250);
+  return { 
+    checkAndCelebrate, 
+    showCelebration, 
+    setShowCelebration,
+    celebrationType,
+    celebrationMessage 
   };
-
-  return { checkAndCelebrate, showCelebration, setShowCelebration };
 };
