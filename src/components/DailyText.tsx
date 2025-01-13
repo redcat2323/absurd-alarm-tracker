@@ -10,16 +10,25 @@ type DailyText = Database["public"]["Tables"]["daily_texts"]["Row"];
 const REFETCH_INTERVAL = 30000; // 30 segundos
 
 export const DailyText = () => {
+  const today = new Date().toISOString().split('T')[0];
+  
   const { data: dailyText } = useQuery({
-    queryKey: ['dailyText', new Date().toISOString().split('T')[0]],
+    queryKey: ['dailyText', today],
     queryFn: async () => {
+      console.log('Buscando boot diário para a data:', today);
+      
       const { data, error } = await supabase
         .from("daily_texts")
         .select()
-        .eq("date", new Date().toISOString().split("T")[0])
+        .eq("date", today)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar boot diário:', error);
+        throw error;
+      }
+      
+      console.log('Boot diário encontrado:', data);
       return data;
     },
     staleTime: REFETCH_INTERVAL,

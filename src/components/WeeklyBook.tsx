@@ -12,16 +12,27 @@ export const WeeklyBook = () => {
 
   useEffect(() => {
     const fetchWeeklyBook = async () => {
-      const startOfWeek = new Date();
-      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      // Obter o domingo da semana atual
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+      const weekStart = startOfWeek.toISOString().split("T")[0];
+      
+      console.log('Buscando livro da semana para a data:', weekStart);
       
       const { data, error } = await supabase
         .from("weekly_books")
         .select()
-        .eq("week_start", startOfWeek.toISOString().split("T")[0])
+        .eq("week_start", weekStart)
         .maybeSingle();
 
-      if (!error && data) {
+      if (error) {
+        console.error('Erro ao buscar livro da semana:', error);
+        return;
+      }
+
+      console.log('Livro da semana encontrado:', data);
+      if (data) {
         setBook(data);
       }
     };
@@ -35,6 +46,8 @@ export const WeeklyBook = () => {
         // Extrair apenas o nome do arquivo da URL completa
         const fileName = book.pdf_url.split('/').pop();
         if (!fileName) return;
+
+        console.log('Iniciando download do PDF:', fileName);
 
         const { data, error } = await supabase.storage
           .from('book_files')
