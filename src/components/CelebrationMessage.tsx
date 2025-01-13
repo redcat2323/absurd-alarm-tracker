@@ -20,47 +20,30 @@ export const CelebrationMessage = ({
     if (show) {
       const timer = setTimeout(() => {
         onClose();
-      }, 3000);
+      }, 2000); // Reduzido de 3000 para 2000ms
 
       if (type === "achievement") {
-        // Confete dourado para conquistas
+        // Confete dourado mais sutil para conquistas
         confetti({
-          particleCount: 150,
-          spread: 100,
+          particleCount: 80,
+          spread: 60,
           origin: { y: 0.6 },
           colors: ['#FFD700', '#FFA500', '#FF8C00'],
           shapes: ['star'],
         });
       } else if (type === "milestone") {
-        // Explosão de confete para marcos importantes
-        const end = Date.now() + 1000;
-        const colors = ['#9b87f5', '#7E69AB', '#D946EF'];
-        
-        (function frame() {
-          confetti({
-            particleCount: 7,
-            angle: 60,
-            spread: 55,
-            origin: { x: 0 },
-            colors: colors
-          });
-          confetti({
-            particleCount: 7,
-            angle: 120,
-            spread: 55,
-            origin: { x: 1 },
-            colors: colors
-          });
-        
-          if (Date.now() < end) {
-            requestAnimationFrame(frame);
-          }
-        }());
-      } else {
-        // Confete padrão para tarefas diárias
+        // Explosão de confete mais sutil para marcos
         confetti({
-          particleCount: 100,
-          spread: 70,
+          particleCount: 50,
+          spread: 45,
+          origin: { y: 0.6 },
+          colors: ['#9b87f5', '#7E69AB', '#D946EF'],
+        });
+      } else {
+        // Confete mais sutil para tarefas diárias
+        confetti({
+          particleCount: 30,
+          spread: 40,
           origin: { y: 0.6 },
           colors: ['#9b87f5', '#7E69AB', '#D946EF'],
         });
@@ -71,9 +54,9 @@ export const CelebrationMessage = ({
   }, [show, type, onClose]);
 
   const icons = {
-    daily: <Star className="w-12 h-12 text-primary animate-spin-slow" />,
-    achievement: <Trophy className="w-12 h-12 text-yellow-500 animate-bounce" />,
-    milestone: <Award className="w-12 h-12 text-primary animate-pulse" />
+    daily: <Star className="w-10 h-10 text-primary animate-pulse" />,
+    achievement: <Trophy className="w-10 h-10 text-yellow-500 animate-bounce" />,
+    milestone: <Award className="w-10 h-10 text-primary animate-pulse" />
   };
 
   return (
@@ -84,17 +67,17 @@ export const CelebrationMessage = ({
       )}
     >
       <div className={cn(
-        "text-center p-8 rounded-lg bg-background/50 backdrop-blur-md shadow-xl",
-        "transform transition-all duration-500",
+        "text-center p-6 rounded-lg bg-background/50 backdrop-blur-md shadow-xl",
+        "transform transition-all duration-300",
         show ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
       )}>
-        <div className="mb-4">
+        <div className="mb-3">
           {icons[type]}
         </div>
-        <h1 className="text-4xl md:text-6xl font-bold text-primary mb-4 animate-fade-in">
+        <h1 className="text-3xl font-bold text-primary mb-3 animate-fade-in">
           🎉 Parabéns! 🎉
         </h1>
-        <p className="text-xl md:text-2xl text-muted-foreground animate-fade-in-up">
+        <p className="text-lg text-muted-foreground animate-fade-in-up">
           {message || "Você completou todas as tarefas de hoje!"}
         </p>
       </div>

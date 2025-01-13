@@ -31,15 +31,21 @@ export const useCelebration = () => {
   };
 
   const celebrate = (type: "daily" | "achievement" | "milestone") => {
+    // Evita múltiplas celebrações simultâneas
+    if (showCelebration) return;
+
     const message = getRandomMessage(type);
     setCelebrationType(type);
     setCelebrationMessage(message);
     setShowCelebration(true);
 
-    toast({
-      title: message,
-      className: "animate-bounce",
-    });
+    // Apenas mostra o toast para conquistas e marcos importantes
+    if (type !== "daily") {
+      toast({
+        title: message,
+        className: "animate-bounce",
+      });
+    }
   };
 
   const checkAndCelebrate = (
