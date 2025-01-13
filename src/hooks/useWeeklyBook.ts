@@ -12,31 +12,40 @@ export const useWeeklyBook = () => {
   const [book, setBook] = useState<WeeklyBook | null>(null);
 
   const fetchWeeklyBook = async () => {
-    // Pega a data atual em UTC
-    const now = new Date();
-    
-    // Converte para data em Brasília
-    const brazilianDate = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
-    console.log('Data atual (Brasília):', brazilianDate);
-    
-    // Encontra o domingo (início) da semana atual
-    const currentWeekStart = startOfWeek(new Date(brazilianDate), { weekStartsOn: 0 });
-    const weekStart = formatInTimeZone(currentWeekStart, TIMEZONE, 'yyyy-MM-dd');
-    console.log('Início da semana atual (domingo):', weekStart);
-    
-    const { data, error } = await supabase
-      .from("weekly_books")
-      .select()
-      .eq("week_start", weekStart)
-      .maybeSingle();
+    try {
+      // Pega a data atual em UTC e converte para Brasília
+      const now = new Date();
+      const brazilianDate = formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
+      console.log('Data atual (Brasília):', brazilianDate);
+      
+      // Encontra o domingo da semana atual
+      // Importante: não precisamos converter para UTC porque queremos o domingo
+      // baseado na data local em Brasília
+      const brazilianDateObj = new Date(brazilianDate);
+      const weekStart = formatInTimeZone(
+        startOfWeek(brazilianDateObj, { weekStartsOn: 0 }),
+        TIMEZONE,
+        'yyyy-MM-dd'
+      );
+      
+      console.log('Data de início da semana (domingo):', weekStart);
+      
+      const { data, error } = await supabase
+        .from("weekly_books")
+        .select()
+        .eq("week_start", weekStart)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Erro ao buscar livro da semana:', error);
-      return;
+      if (error) {
+        console.error('Erro ao buscar livro da semana:', error);
+        return;
+      }
+
+      console.log('Livro da semana encontrado:', data);
+      setBook(data);
+    } catch (error) {
+      console.error('Erro ao processar datas:', error);
     }
-
-    console.log('Livro da semana encontrado:', data);
-    setBook(data);
   };
 
   useEffect(() => {
