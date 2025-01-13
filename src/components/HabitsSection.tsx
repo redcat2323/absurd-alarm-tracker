@@ -18,7 +18,8 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     showCelebration, 
     setShowCelebration,
     celebrationType,
-    celebrationMessage 
+    celebrationMessage,
+    celebrate 
   } = useCelebration();
   const { achievements, unlockAchievement } = useAchievements(userId);
 
