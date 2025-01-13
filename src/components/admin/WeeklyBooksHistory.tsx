@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -18,12 +18,19 @@ export const WeeklyBooksHistory = ({ books, onViewPdf }: WeeklyBooksHistoryProps
     });
   };
 
+  const getEndDate = (startDate: string) => {
+    const date = parseISO(startDate);
+    const endDate = addDays(date, 6); // Add 6 days to get to Saturday
+    return formatDate(endDate.toISOString());
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Semana</TableHead>
+            <TableHead>Início da Semana</TableHead>
+            <TableHead>Fim da Semana</TableHead>
             <TableHead>Título</TableHead>
             <TableHead>Autor</TableHead>
             <TableHead>Descrição</TableHead>
@@ -35,6 +42,7 @@ export const WeeklyBooksHistory = ({ books, onViewPdf }: WeeklyBooksHistoryProps
           {books.map((book) => (
             <TableRow key={book.id}>
               <TableCell>{formatDate(book.week_start)}</TableCell>
+              <TableCell>{getEndDate(book.week_start)}</TableCell>
               <TableCell>{book.title}</TableCell>
               <TableCell>{book.author}</TableCell>
               <TableCell className="max-w-md">
