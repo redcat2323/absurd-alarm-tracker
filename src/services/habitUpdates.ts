@@ -30,8 +30,8 @@ export const updateDefaultHabit = async (
   newCompleted: boolean
 ) => {
   const newCompletedDays = newCompleted ? 
-    habit.completedDays + 1 : 
-    habit.completedDays - 1;
+    habit.completed_days + 1 : 
+    habit.completed_days - 1;
   
   const newProgress = calculateAnnualProgress(newCompletedDays);
 
