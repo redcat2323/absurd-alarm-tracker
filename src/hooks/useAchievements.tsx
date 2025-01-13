@@ -41,6 +41,15 @@ export const useAchievements = (userId: string | undefined) => {
   const unlockAchievement = async (achievementId: number) => {
     if (!userId) return;
 
+    // Check if achievement is already unlocked
+    const isAlreadyUnlocked = userAchievements?.some(
+      ua => ua.achievement_id === achievementId
+    );
+
+    if (isAlreadyUnlocked) {
+      return; // Silently return if already unlocked
+    }
+
     try {
       const { error } = await supabase
         .from('user_achievements')
@@ -49,10 +58,12 @@ export const useAchievements = (userId: string | undefined) => {
         ]);
 
       if (error) {
-        if (error.code === '23505') { // Unique violation
-          return; // Achievement already unlocked
+        // If it's not a duplicate error, throw it
+        if (error.code !== '23505') {
+          throw error;
         }
-        throw error;
+        // If it is a duplicate, just return silently
+        return;
       }
 
       const achievement = achievements?.find(a => a.id === achievementId);
