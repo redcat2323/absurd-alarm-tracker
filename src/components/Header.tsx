@@ -1,6 +1,7 @@
 import React from 'react';
 import { getWeek } from 'date-fns';
 import { Check, AlertCircle, XCircle } from 'lucide-react';
+import { calculateProgress } from '@/utils/dateUtils';
 
 interface HeaderProps {
   userName: string;
@@ -10,6 +11,7 @@ interface HeaderProps {
 export const Header = ({ userName, dayOfYear }: HeaderProps) => {
   const currentWeek = getWeek(new Date(), { weekStartsOn: 0 }); // 0 = Sunday
   const totalWeeks = 52;
+  const yearProgress = calculateProgress(dayOfYear);
 
   return (
     <div className="text-center space-y-6">
@@ -19,7 +21,7 @@ export const Header = ({ userName, dayOfYear }: HeaderProps) => {
           da Sua Vida
         </h1>
         <p className="text-muted-foreground">
-          Bem-vindo, {userName}! | Dia {dayOfYear} do ano | Semana {currentWeek} de {totalWeeks}
+          Bem-vindo, {userName}! | Dia {dayOfYear} do ano ({yearProgress}%) | Semana {currentWeek} de {totalWeeks}
         </p>
       </div>
 

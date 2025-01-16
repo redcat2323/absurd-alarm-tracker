@@ -5,5 +5,5 @@ export const getDaysInCurrentYear = () => {
 
 export const calculateProgress = (completedDays: number): number => {
   const totalDays = getDaysInCurrentYear();
-  return Number(((completedDays / totalDays) * 100).toFixed(2));
+  return Number(((completedDays / totalDays) * 100).toFixed(1));
 };
