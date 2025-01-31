@@ -52,25 +52,34 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
   }, [selectedDate, toast]);
 
   const clearForm = () => {
-    // Limpa o texto e reseta a data para o dia atual
     setDailyText("");
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
   // Função auxiliar para verificar se o texto HTML está realmente vazio
   const isHTMLEmpty = (html: string) => {
-    if (!html) return true;
+    console.log("Verificando conteúdo do texto:", html);
+    
+    if (!html) {
+      console.log("Texto é null ou undefined");
+      return true;
+    }
     
     // Remove espaços em branco e quebras de linha
     const trimmed = html.trim();
+    console.log("Texto após trim:", trimmed);
+    
     // Remove tags HTML vazias comuns e caracteres especiais
     const withoutEmptyTags = trimmed
       .replace(/<p>\s*<\/p>/g, '')
       .replace(/<div>\s*<\/div>/g, '')
       .replace(/<br\s*\/?>/g, '')
       .replace(/&nbsp;/g, '')
-      .replace(/\u3164/g, '') // Remove o caractere hangul filler
+      .replace(/\u3164/g, '')
       .trim();
+    
+    console.log("Texto após limpeza de tags:", withoutEmptyTags);
+    console.log("Texto está vazio?", withoutEmptyTags === '');
     
     return withoutEmptyTags === '';
   };
@@ -148,7 +157,10 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
           <Label htmlFor="boot-text">Texto do Boot</Label>
           <RichTextEditor
             value={dailyText}
-            onChange={setDailyText}
+            onChange={(value) => {
+              console.log("Novo valor do editor:", value);
+              setDailyText(value);
+            }}
             placeholder="Digite o texto do dia..."
           />
         </div>
