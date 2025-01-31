@@ -20,6 +20,12 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
 
   useEffect(() => {
     const fetchExistingText = async () => {
+      // Don't fetch if date is empty
+      if (!selectedDate) {
+        setDailyText("");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("daily_texts")
         .select("text")
@@ -52,6 +58,15 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedDate) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma data.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!dailyText.trim()) {
       toast({
@@ -98,6 +113,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             className="mb-4"
+            required
           />
         </div>
         <div>
