@@ -69,19 +69,18 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
     const trimmed = html.trim();
     console.log("Texto após trim:", trimmed);
     
-    // Remove tags HTML vazias comuns e caracteres especiais
-    const withoutEmptyTags = trimmed
-      .replace(/<p>\s*<\/p>/g, '')
-      .replace(/<div>\s*<\/div>/g, '')
-      .replace(/<br\s*\/?>/g, '')
-      .replace(/&nbsp;/g, '')
-      .replace(/\u3164/g, '')
+    // Verifica se há conteúdo real após remover tags HTML vazias
+    const contentWithoutTags = trimmed
+      .replace(/<[^>]*>/g, '') // Remove todas as tags HTML
+      .replace(/&nbsp;/g, ' ') // Converte &nbsp; em espaço
+      .replace(/\u3164/g, '') // Remove caractere hangul filler
+      .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
       .trim();
     
-    console.log("Texto após limpeza de tags:", withoutEmptyTags);
-    console.log("Texto está vazio?", withoutEmptyTags === '');
+    console.log("Texto após remoção de tags:", contentWithoutTags);
+    console.log("Texto está vazio?", contentWithoutTags === '');
     
-    return withoutEmptyTags === '';
+    return contentWithoutTags === '';
   };
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
