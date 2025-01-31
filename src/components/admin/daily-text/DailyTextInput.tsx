@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -20,7 +20,6 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
 
   useEffect(() => {
     const fetchExistingText = async () => {
-      // Don't fetch if date is empty
       if (!selectedDate) {
         setDailyText("");
         return;
@@ -33,6 +32,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
         .maybeSingle();
 
       if (error) {
+        console.error("Erro ao buscar texto existente:", error);
         toast({
           title: "Erro",
           description: "Erro ao buscar texto existente.",
@@ -58,6 +58,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
 
   // Função auxiliar para verificar se o texto HTML está realmente vazio
   const isHTMLEmpty = (html: string) => {
+    console.log("Verificando se o texto está vazio. Texto recebido:", html);
     // Remove espaços em branco e quebras de linha
     const trimmed = html.trim();
     // Remove tags HTML vazias comuns
@@ -68,13 +69,20 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
       .replace(/&nbsp;/g, '')
       .trim();
     
+    console.log("Texto após limpeza:", withoutEmptyTags);
+    console.log("O texto está vazio?", withoutEmptyTags === '');
+    
     return withoutEmptyTags === '';
   };
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Iniciando submissão do texto diário");
+    console.log("Data selecionada:", selectedDate);
+    console.log("Texto do boot:", dailyText);
 
     if (!selectedDate) {
+      console.log("Data não selecionada");
       toast({
         title: "Erro",
         description: "Por favor, selecione uma data.",
@@ -84,6 +92,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
     }
 
     if (isHTMLEmpty(dailyText)) {
+      console.log("Texto está vazio após verificação");
       toast({
         title: "Erro",
         description: "O texto do boot não pode estar vazio.",
@@ -92,12 +101,15 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
       return;
     }
 
-    const { error } = await supabase
+    console.log("Iniciando upsert no Supabase");
+    const { data, error } = await supabase
       .from("daily_texts")
       .upsert(
         { text: dailyText, date: selectedDate },
         { onConflict: "date" }
       );
+
+    console.log("Resposta do Supabase:", { data, error });
 
     if (error) {
       console.error("Error saving daily text:", error);
@@ -107,6 +119,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
         variant: "destructive",
       });
     } else {
+      console.log("Texto salvo com sucesso");
       toast({
         title: "Sucesso",
         description: "Texto diário atualizado com sucesso!",
