@@ -56,6 +56,21 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
+  // Função auxiliar para verificar se o texto HTML está realmente vazio
+  const isHTMLEmpty = (html: string) => {
+    // Remove espaços em branco e quebras de linha
+    const trimmed = html.trim();
+    // Remove tags HTML vazias comuns
+    const withoutEmptyTags = trimmed
+      .replace(/<p>\s*<\/p>/g, '')
+      .replace(/<div>\s*<\/div>/g, '')
+      .replace(/<br\s*\/?>/g, '')
+      .replace(/&nbsp;/g, '')
+      .trim();
+    
+    return withoutEmptyTags === '';
+  };
+
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -68,7 +83,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
       return;
     }
 
-    if (!dailyText.trim()) {
+    if (isHTMLEmpty(dailyText)) {
       toast({
         title: "Erro",
         description: "O texto do boot não pode estar vazio.",
