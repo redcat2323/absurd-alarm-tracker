@@ -52,25 +52,25 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
   }, [selectedDate, toast]);
 
   const clearForm = () => {
+    // Limpa o texto e reseta a data para o dia atual
     setDailyText("");
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
   // Função auxiliar para verificar se o texto HTML está realmente vazio
   const isHTMLEmpty = (html: string) => {
-    console.log("Verificando se o texto está vazio. Texto recebido:", html);
+    if (!html) return true;
+    
     // Remove espaços em branco e quebras de linha
     const trimmed = html.trim();
-    // Remove tags HTML vazias comuns
+    // Remove tags HTML vazias comuns e caracteres especiais
     const withoutEmptyTags = trimmed
       .replace(/<p>\s*<\/p>/g, '')
       .replace(/<div>\s*<\/div>/g, '')
       .replace(/<br\s*\/?>/g, '')
       .replace(/&nbsp;/g, '')
+      .replace(/\u3164/g, '') // Remove o caractere hangul filler
       .trim();
-    
-    console.log("Texto após limpeza:", withoutEmptyTags);
-    console.log("O texto está vazio?", withoutEmptyTags === '');
     
     return withoutEmptyTags === '';
   };
