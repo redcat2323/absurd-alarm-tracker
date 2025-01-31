@@ -77,7 +77,7 @@ const DailyTextForm = () => {
   }, [selectedDate, toast]);
 
   const clearForm = () => {
-    setDailyText("");
+    setDailyText("");  // This will now properly clear the rich text editor
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
@@ -114,7 +114,7 @@ const DailyTextForm = () => {
         description: "Texto diário atualizado com sucesso!",
       });
       await fetchDailyTexts();
-      clearForm(); // Clear the form after successful save
+      clearForm(); // This will now properly clear both fields
     }
   };
 
