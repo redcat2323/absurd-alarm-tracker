@@ -76,8 +76,23 @@ const DailyTextForm = () => {
     fetchExistingText();
   }, [selectedDate, toast]);
 
+  const clearForm = () => {
+    setDailyText("");
+    setSelectedDate(new Date().toISOString().split("T")[0]);
+  };
+
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent saving empty texts
+    if (!dailyText.trim()) {
+      toast({
+        title: "Erro",
+        description: "O texto do boot não pode estar vazio.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from("daily_texts")
@@ -98,7 +113,8 @@ const DailyTextForm = () => {
         title: "Sucesso",
         description: "Texto diário atualizado com sucesso!",
       });
-      fetchDailyTexts();
+      await fetchDailyTexts();
+      clearForm(); // Clear the form after successful save
     }
   };
 
