@@ -60,10 +60,6 @@ const Index = () => {
       <div className="max-w-6xl mx-auto space-y-8">
         <Header userName={userName} dayOfYear={dayOfYear} />
         
-        {userId && (
-          <ProgressDashboard userId={userId} />
-        )}
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {userId && (
             <HabitsSection userId={userId} />
@@ -74,6 +70,13 @@ const Index = () => {
             <WeeklyBook />
           </div>
         </div>
+
+        {userId && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-primary mb-6">Seu Progresso</h2>
+            <ProgressDashboard userId={userId} />
+          </div>
+        )}
 
         {userId && (
           <AchievementsSection userId={userId} />
