@@ -51,23 +51,39 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
       // Buscar completions dos últimos 30 dias
       const { data: completions } = await supabase
         .from('habit_daily_completions')
-        .select('completion_date, habit_id')
+        .select('completion_date')
         .eq('user_id', userId)
-        .gte('completion_date', thirtyDaysAgo);
+        .gte('completion_date', thirtyDaysAgo)
+        .order('completion_date', { ascending: false });
+
+      // Agrupar completions por data
+      const completionsByDate = completions?.reduce((acc, curr) => {
+        const date = format(new Date(curr.completion_date), 'yyyy-MM-dd');
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
 
       // Calcular taxa média de conclusão diária
-      const dailyCompletionRates = Array.from({ length: 30 }, (_, i) => {
-        const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
-        const habitsCompletedOnDay = completions?.filter(c => 
-          format(new Date(c.completion_date), 'yyyy-MM-dd') === date
-        ).length || 0;
-        
-        return (habitsCompletedOnDay / totalHabits) * 100;
-      });
+      let totalCompletionRate = 0;
+      let daysWithCompletions = 0;
 
-      const averageCompletionRate = Math.round(
-        dailyCompletionRates.reduce((sum, rate) => sum + rate, 0) / 30
-      );
+      // Iterar pelos últimos 30 dias
+      for (let i = 0; i < 30; i++) {
+        const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+        const completionsOnDay = completionsByDate[date] || 0;
+        
+        if (completionsOnDay > 0) {
+          // Calcular a taxa para este dia (limitada a 100%)
+          const dayRate = Math.min((completionsOnDay / totalHabits) * 100, 100);
+          totalCompletionRate += dayRate;
+          daysWithCompletions++;
+        }
+      }
+
+      // Calcular a média apenas para os dias em que houve completions
+      const averageCompletionRate = daysWithCompletions > 0
+        ? Math.round(totalCompletionRate / daysWithCompletions)
+        : 0;
 
       return {
         currentStreak: streak,
