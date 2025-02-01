@@ -14,7 +14,7 @@ export const Header = ({ userName, dayOfYear }: HeaderProps) => {
   const yearProgress = calculateProgress(dayOfYear);
 
   return (
-    <div className="text-center pt-0">
+    <div className="text-center -mt-8">
       <div className="mb-4">
         <h1 className="text-4xl font-bold mb-1">
           O Pior Ano<br />
