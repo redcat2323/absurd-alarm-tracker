@@ -38,20 +38,41 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
 
       // Calcular taxa de conclusão (últimos 30 dias)
       const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+      
+      // Buscar total de hábitos (padrão + customizados)
+      const { data: customHabits } = await supabase
+        .from('custom_habits')
+        .select('id')
+        .eq('user_id', userId);
+      
+      const totalDefaultHabits = 5; // Número fixo de hábitos padrão
+      const totalHabits = (customHabits?.length || 0) + totalDefaultHabits;
+      
+      // Buscar completions dos últimos 30 dias
       const { data: completions } = await supabase
         .from('habit_daily_completions')
-        .select('completion_date')
+        .select('completion_date, habit_id')
         .eq('user_id', userId)
         .gte('completion_date', thirtyDaysAgo);
 
-      const completionRate = completions 
-        ? Math.round((completions.length / 30) * 100) 
-        : 0;
+      // Calcular taxa média de conclusão diária
+      const dailyCompletionRates = Array.from({ length: 30 }, (_, i) => {
+        const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+        const habitsCompletedOnDay = completions?.filter(c => 
+          format(new Date(c.completion_date), 'yyyy-MM-dd') === date
+        ).length || 0;
+        
+        return (habitsCompletedOnDay / totalHabits) * 100;
+      });
+
+      const averageCompletionRate = Math.round(
+        dailyCompletionRates.reduce((sum, rate) => sum + rate, 0) / 30
+      );
 
       return {
         currentStreak: streak,
         bestStreak: streak, // Por enquanto igual à sequência atual
-        completionRate,
+        completionRate: averageCompletionRate,
       };
     },
   });
