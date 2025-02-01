@@ -58,44 +58,61 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
 
   // Função auxiliar para verificar se o texto HTML está realmente vazio
   const isHTMLEmpty = (html: string) => {
-    console.log("Verificando texto:", {
-      original: html,
+    console.log("=== Início da verificação de texto vazio ===");
+    console.log("Texto recebido:", {
+      content: html,
       length: html?.length || 0,
       type: typeof html
     });
     
     if (!html || typeof html !== 'string') {
-      console.log("Texto inválido ou undefined");
+      console.log("❌ Texto inválido ou undefined");
       return true;
     }
 
+    // Primeiro, vamos ver o texto antes de qualquer limpeza
+    console.log("Texto original:", JSON.stringify(html));
+
     // Remove todos os caracteres especiais e tags HTML
-    const cleanContent = html
-      .replace(/<[^>]*>/g, '') // Remove tags HTML
-      .replace(/&nbsp;/g, ' ') // Converte &nbsp; em espaço
+    let cleanContent = html
+      .replace(/<[^>]*>/g, ''); // Remove tags HTML
+    console.log("1. Após remover tags HTML:", JSON.stringify(cleanContent));
+    
+    cleanContent = cleanContent
+      .replace(/&nbsp;/g, ' '); // Converte &nbsp; em espaço
+    console.log("2. Após converter &nbsp;:", JSON.stringify(cleanContent));
+    
+    cleanContent = cleanContent
       .replace(/\u3164/g, '') // Remove caractere hangul filler
-      .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove caracteres de largura zero
+      .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Remove caracteres de largura zero
+    console.log("3. Após remover caracteres especiais:", JSON.stringify(cleanContent));
+    
+    cleanContent = cleanContent
       .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
       .trim();
+    console.log("4. Após normalizar espaços:", JSON.stringify(cleanContent));
 
-    console.log("Texto após limpeza:", {
-      cleanContent,
+    const isEmpty = cleanContent.length === 0 || /^\s*$/.test(cleanContent);
+    console.log("Resultado final:", {
+      cleanContent: JSON.stringify(cleanContent),
       length: cleanContent.length,
-      containsOnlySpaces: /^\s*$/.test(cleanContent)
+      containsOnlySpaces: /^\s*$/.test(cleanContent),
+      isEmpty
     });
+    console.log("=== Fim da verificação de texto vazio ===");
 
-    // Verifica se o texto contém apenas espaços ou está vazio
-    return cleanContent.length === 0 || /^\s*$/.test(cleanContent);
+    return isEmpty;
   };
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Iniciando submissão do texto diário");
+    console.log("=== Início do processo de submissão ===");
     console.log("Data selecionada:", selectedDate);
-    console.log("Texto do boot:", dailyText);
+    console.log("Texto do boot (comprimento):", dailyText?.length || 0);
+    console.log("Texto do boot (conteúdo):", JSON.stringify(dailyText));
 
     if (!selectedDate) {
-      console.log("Data não selecionada");
+      console.log("❌ Data não selecionada");
       toast({
         title: "Erro",
         description: "Por favor, selecione uma data.",
@@ -105,7 +122,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
     }
 
     if (isHTMLEmpty(dailyText)) {
-      console.log("Texto está vazio após verificação");
+      console.log("❌ Texto está vazio após verificação");
       toast({
         title: "Erro",
         description: "O texto do boot não pode estar vazio.",
@@ -114,7 +131,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
       return;
     }
 
-    console.log("Iniciando upsert no Supabase");
+    console.log("✅ Validações passaram, iniciando upsert no Supabase");
     const { data, error } = await supabase
       .from("daily_texts")
       .upsert(
@@ -132,7 +149,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
         variant: "destructive",
       });
     } else {
-      console.log("Texto salvo com sucesso");
+      console.log("✅ Texto salvo com sucesso");
       toast({
         title: "Sucesso",
         description: "Texto diário atualizado com sucesso!",
@@ -140,6 +157,7 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
       onTextSaved();
       clearForm();
     }
+    console.log("=== Fim do processo de submissão ===");
   };
 
   return (
