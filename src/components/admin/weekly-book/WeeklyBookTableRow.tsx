@@ -1,6 +1,8 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format, parseISO, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 type WeeklyBook = Database["public"]["Tables"]["weekly_books"]["Row"];
@@ -33,23 +35,22 @@ export const WeeklyBookTableRow = ({ book, onViewPdf }: WeeklyBookTableRowProps)
       <TableCell className="max-w-md">
         {book.description && (
           <div 
-            className="prose prose-sm dark:prose-invert line-clamp-2"
-            dangerouslySetInnerHTML={{ 
-              __html: book.description.length > 150 
-                ? book.description.substring(0, 150) + "..." 
-                : book.description 
-            }}
+            className="prose prose-sm dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: book.description }}
           />
         )}
       </TableCell>
       <TableCell>
         {book.pdf_url && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onViewPdf(book.pdf_url!)}
-            className="text-primary hover:underline"
+            className="flex items-center gap-2"
           >
+            <FileText className="h-4 w-4" />
             Ver PDF
-          </button>
+          </Button>
         )}
       </TableCell>
       <TableCell>
