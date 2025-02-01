@@ -58,8 +58,6 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
 
   // Função auxiliar para verificar se o texto HTML está realmente vazio
   const isHTMLEmpty = (html: string) => {
-    console.log("Verificando conteúdo do texto:", html);
-    
     if (!html) {
       console.log("Texto é null ou undefined");
       return true;
@@ -67,20 +65,21 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
     
     // Remove espaços em branco e quebras de linha
     const trimmed = html.trim();
-    console.log("Texto após trim:", trimmed);
     
-    // Verifica se há conteúdo real após remover tags HTML vazias
+    // Verifica se há conteúdo real após remover tags HTML e caracteres especiais
     const contentWithoutTags = trimmed
       .replace(/<[^>]*>/g, '') // Remove todas as tags HTML
       .replace(/&nbsp;/g, ' ') // Converte &nbsp; em espaço
       .replace(/\u3164/g, '') // Remove caractere hangul filler
+      .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove caracteres de largura zero
       .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
       .trim();
     
-    console.log("Texto após remoção de tags:", contentWithoutTags);
-    console.log("Texto está vazio?", contentWithoutTags === '');
+    console.log("Conteúdo após limpeza:", contentWithoutTags);
+    console.log("Comprimento do conteúdo:", contentWithoutTags.length);
+    console.log("Texto está vazio?", contentWithoutTags.length === 0);
     
-    return contentWithoutTags === '';
+    return contentWithoutTags.length === 0;
   };
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
