@@ -15,8 +15,8 @@ export const Header = ({ userName, dayOfYear }: HeaderProps) => {
 
   return (
     <div className="text-center -mt-16">
-      <div className="mb-4">
-        <h1 className="text-4xl font-bold mb-1">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-4">
           O Pior Ano<br />
           da Sua Vida
         </h1>
