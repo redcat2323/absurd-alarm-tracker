@@ -58,28 +58,34 @@ export const DailyTextInput = ({ onTextSaved }: DailyTextInputProps) => {
 
   // Função auxiliar para verificar se o texto HTML está realmente vazio
   const isHTMLEmpty = (html: string) => {
-    if (!html) {
-      console.log("Texto é null ou undefined");
+    console.log("Verificando texto:", {
+      original: html,
+      length: html?.length || 0,
+      type: typeof html
+    });
+    
+    if (!html || typeof html !== 'string') {
+      console.log("Texto inválido ou undefined");
       return true;
     }
-    
-    // Remove espaços em branco e quebras de linha
-    const trimmed = html.trim();
-    
-    // Verifica se há conteúdo real após remover tags HTML e caracteres especiais
-    const contentWithoutTags = trimmed
-      .replace(/<[^>]*>/g, '') // Remove todas as tags HTML
+
+    // Remove todos os caracteres especiais e tags HTML
+    const cleanContent = html
+      .replace(/<[^>]*>/g, '') // Remove tags HTML
       .replace(/&nbsp;/g, ' ') // Converte &nbsp; em espaço
       .replace(/\u3164/g, '') // Remove caractere hangul filler
       .replace(/[\u200B-\u200D\uFEFF]/g, '') // Remove caracteres de largura zero
       .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
       .trim();
-    
-    console.log("Conteúdo após limpeza:", contentWithoutTags);
-    console.log("Comprimento do conteúdo:", contentWithoutTags.length);
-    console.log("Texto está vazio?", contentWithoutTags.length === 0);
-    
-    return contentWithoutTags.length === 0;
+
+    console.log("Texto após limpeza:", {
+      cleanContent,
+      length: cleanContent.length,
+      containsOnlySpaces: /^\s*$/.test(cleanContent)
+    });
+
+    // Verifica se o texto contém apenas espaços ou está vazio
+    return cleanContent.length === 0 || /^\s*$/.test(cleanContent);
   };
 
   const handleDailyTextSubmit = async (e: React.FormEvent) => {
