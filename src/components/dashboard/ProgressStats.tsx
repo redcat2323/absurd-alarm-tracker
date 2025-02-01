@@ -17,6 +17,7 @@ export const ProgressStats = ({ currentStreak, bestStreak, completionRate }: Pro
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{currentStreak} dias</div>
+          <p className="text-xs text-muted-foreground mt-1">dias seguidos completando hábitos</p>
         </CardContent>
       </Card>
 
@@ -27,17 +28,20 @@ export const ProgressStats = ({ currentStreak, bestStreak, completionRate }: Pro
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{bestStreak} dias</div>
+          <p className="text-xs text-muted-foreground mt-1">seu recorde de dias seguidos</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Taxa Média de Conclusão</CardTitle>
+          <CardTitle className="text-sm font-medium">Taxa de Conclusão Diária</CardTitle>
           <Target className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{completionRate}%</div>
-          <p className="text-xs text-muted-foreground mt-1">dos hábitos completados por dia</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Em média, você completa {completionRate}% dos seus hábitos por dia
+          </p>
         </CardContent>
       </Card>
     </div>
