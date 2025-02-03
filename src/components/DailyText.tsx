@@ -53,7 +53,7 @@ export const DailyText = () => {
       </div>
       {dailyText?.text ? (
         <div 
-          className="prose prose-lg dark:prose-invert max-w-none text-foreground leading-relaxed"
+          className="prose prose-base dark:prose-invert max-w-none text-foreground leading-relaxed"
           style={{
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word'
