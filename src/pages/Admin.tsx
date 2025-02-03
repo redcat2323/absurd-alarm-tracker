@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Auth } from "@/components/Auth";
 import DailyTextForm from "@/components/admin/DailyTextForm";
 import WeeklyBookForm from "@/components/admin/WeeklyBookForm";
+import UsersDashboard from "@/components/admin/UsersDashboard";
 
 const ADMIN_EMAIL = "jhrizzon@gmail.com";
 
@@ -57,6 +58,7 @@ const Admin = () => {
         <h1 className="text-3xl font-bold text-center mb-8">
           Painel Administrativo
         </h1>
+        <UsersDashboard />
         <DailyTextForm />
         <WeeklyBookForm />
       </div>
