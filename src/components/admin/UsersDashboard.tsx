@@ -13,7 +13,6 @@ import {
 
 type UserEngagement = {
   user_id: string;
-  email: string;
   total_completions: number;
   last_active: string;
 };
@@ -23,7 +22,7 @@ const UsersDashboard = () => {
     queryKey: ["total-users"],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from("user_achievements")
+        .from("habit_daily_completions")
         .select("user_id", { count: "exact", head: true });
 
       if (error) throw error;
@@ -42,33 +41,21 @@ const UsersDashboard = () => {
       if (error) throw error;
 
       // Agrupar completions por usuário
-      const userStats = data.reduce((acc: { [key: string]: number }, curr) => {
-        acc[curr.user_id] = (acc[curr.user_id] || 0) + 1;
+      const userStats = data.reduce((acc: { [key: string]: any }, curr) => {
+        if (!acc[curr.user_id]) {
+          acc[curr.user_id] = {
+            user_id: curr.user_id,
+            total_completions: 0,
+            last_active: curr.created_at,
+          };
+        }
+        acc[curr.user_id].total_completions += 1;
         return acc;
       }, {});
 
-      // Buscar emails dos usuários
-      const { data: users, error: usersError } = await supabase.auth.admin.listUsers();
-      if (usersError) throw usersError;
-
-      // Combinar dados
-      const engagement: UserEngagement[] = Object.entries(userStats)
-        .map(([user_id, total_completions]) => {
-          const user = users.users.find((u) => u.id === user_id);
-          const lastCompletion = data
-            .filter((d) => d.user_id === user_id)
-            .sort((a, b) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )[0];
-
-          return {
-            user_id,
-            email: user?.email || "Email não encontrado",
-            total_completions,
-            last_active: lastCompletion?.created_at || "",
-          };
-        })
-        .sort((a, b) => b.total_completions - a.total_completions);
+      // Converter para array e ordenar por total de completions
+      const engagement: UserEngagement[] = Object.values(userStats)
+        .sort((a: any, b: any) => b.total_completions - a.total_completions);
 
       return engagement;
     },
@@ -120,7 +107,7 @@ const UsersDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Email</TableHead>
+                <TableHead>ID do Usuário</TableHead>
                 <TableHead>Total de Completions</TableHead>
                 <TableHead>Última Atividade</TableHead>
               </TableRow>
@@ -128,7 +115,7 @@ const UsersDashboard = () => {
             <TableBody>
               {userEngagement?.map((user) => (
                 <TableRow key={user.user_id}>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.user_id}</TableCell>
                   <TableCell>{user.total_completions}</TableCell>
                   <TableCell>
                     {new Date(user.last_active).toLocaleDateString("pt-BR")}
