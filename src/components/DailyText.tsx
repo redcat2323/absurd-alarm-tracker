@@ -43,7 +43,7 @@ export const DailyText = () => {
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/5">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-2">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
             Boot Diário
           </h2>
         </div>
