@@ -12,7 +12,6 @@ const REFETCH_INTERVAL = 30000; // 30 segundos
 const TIMEZONE = 'America/Sao_Paulo';
 
 export const DailyText = () => {
-  // Usar formatInTimeZone para obter a data correta no fuso horário de Brasília
   const today = formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM-dd');
   
   const { data: dailyText } = useQuery({
@@ -42,9 +41,15 @@ export const DailyText = () => {
 
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/5">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-primary">Boot Diário</h2>
-        <span className="text-lg text-muted-foreground">{formattedDate}</span>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-2">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            Boot Diário
+          </h2>
+        </div>
+        <span className="text-lg text-muted-foreground font-medium">
+          {formattedDate}
+        </span>
       </div>
       {dailyText?.text ? (
         <div 
