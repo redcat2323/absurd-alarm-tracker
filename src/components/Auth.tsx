@@ -12,13 +12,14 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
   const [name, setName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
+  const [isNewPassword, setIsNewPassword] = useState(false);
   const { toast } = useToast();
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/?reset=true`,
       });
       
       if (error) throw error;
@@ -28,6 +29,29 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
         description: "Verifique sua caixa de entrada para redefinir sua senha.",
       });
       setIsResetPassword(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Senha atualizada!",
+        description: "Sua senha foi alterada com sucesso.",
+      });
+      setIsNewPassword(false);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -71,6 +95,38 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
       });
     }
   };
+
+  // Check if we're in password reset mode from URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('reset') === 'true') {
+      setIsNewPassword(true);
+    }
+  }, []);
+
+  if (isNewPassword) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <Card className="p-6 w-full max-w-md mx-auto">
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            Definir Nova Senha
+          </h2>
+          <form onSubmit={handleUpdatePassword} className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Nova senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+              Atualizar Senha
+            </Button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   if (isResetPassword) {
     return (
