@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,31 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isResetPassword, setIsResetPassword] = useState(false);
   const { toast } = useToast();
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      setIsResetPassword(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +71,37 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
       });
     }
   };
+
+  if (isResetPassword) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <Card className="p-6 w-full max-w-md mx-auto">
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            Recuperar Senha
+          </h2>
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <Input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
+              Enviar Email de Recuperação
+            </Button>
+            <Button
+              variant="link"
+              className="w-full"
+              onClick={() => setIsResetPassword(false)}
+            >
+              Voltar ao login
+            </Button>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
@@ -89,15 +145,26 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
             {isSignUp ? "Começar Agora" : "Entrar"}
           </Button>
         </form>
-        <Button
-          variant="link"
-          className="w-full mt-2"
-          onClick={() => setIsSignUp(!isSignUp)}
-        >
-          {isSignUp
-            ? "Já tem uma conta? Faça login"
-            : "Ainda não tem conta? Cadastre-se"}
-        </Button>
+        <div className="mt-4 space-y-2">
+          <Button
+            variant="link"
+            className="w-full"
+            onClick={() => setIsSignUp(!isSignUp)}
+          >
+            {isSignUp
+              ? "Já tem uma conta? Faça login"
+              : "Ainda não tem conta? Cadastre-se"}
+          </Button>
+          {!isSignUp && (
+            <Button
+              variant="link"
+              className="w-full text-muted-foreground"
+              onClick={() => setIsResetPassword(true)}
+            >
+              Esqueceu sua senha?
+            </Button>
+          )}
+        </div>
       </Card>
 
       <div className="mt-8 text-center max-w-2xl">
