@@ -47,6 +47,27 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
     e.preventDefault();
     try {
       console.log("Iniciando atualização de senha");
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        // Se não houver sessão, tentamos pegar o hash da URL para a recuperação
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const accessToken = hashParams.get('access_token');
+        
+        if (accessToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: '',
+          });
+          
+          if (error) {
+            throw new Error("Erro ao estabelecer sessão");
+          }
+        } else {
+          throw new Error("Sessão de autenticação inválida!");
+        }
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: password
       });
@@ -61,6 +82,9 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
         description: "Sua senha foi alterada com sucesso.",
       });
       setIsNewPassword(false);
+      
+      // Redireciona para a página de login após atualizar a senha
+      window.location.href = window.location.origin;
     } catch (error: any) {
       console.error("Erro ao atualizar senha:", error);
       toast({
@@ -110,20 +134,17 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
   useEffect(() => {
     const checkPasswordReset = async () => {
       const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
       
       // Verifica se estamos em modo de recuperação de senha
-      if (searchParams.get('type') === 'recovery') {
+      if (searchParams.get('type') === 'recovery' || hashParams.get('access_token')) {
         console.log("Modo de recuperação de senha detectado");
         setIsNewPassword(true);
         // Previne login automático em modo de recuperação
-        const { error: signOutError } = await supabase.auth.signOut();
-        if (signOutError) {
-          console.error("Erro ao fazer logout:", signOutError);
-        }
+        await supabase.auth.signOut();
       }
 
       // Verifica se há algum erro na URL
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const error = hashParams.get('error');
       const errorDescription = hashParams.get('error_description');
       if (error) {
