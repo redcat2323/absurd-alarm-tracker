@@ -47,49 +47,46 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
     e.preventDefault();
     try {
       console.log("Iniciando atualização de senha");
-      const { data: sessionData } = await supabase.auth.getSession();
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hashParams.get('access_token');
       
-      if (!sessionData.session) {
-        // Se não houver sessão, tentamos pegar o hash da URL para a recuperação
-        const hashParams = new URLSearchParams(window.location.hash.slice(1));
-        const accessToken = hashParams.get('access_token');
-        
-        if (accessToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: '',
-          });
-          
-          if (error) {
-            throw new Error("Erro ao estabelecer sessão");
-          }
-        } else {
-          throw new Error("Sessão de autenticação inválida!");
-        }
+      if (!accessToken) {
+        throw new Error("Token de acesso não encontrado!");
       }
 
-      const { error } = await supabase.auth.updateUser({
+      // Primeiro estabelecer a sessão com o token
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: hashParams.get('refresh_token') || '',
+      });
+
+      if (sessionError) {
+        console.error("Erro ao estabelecer sessão:", sessionError);
+        throw sessionError;
+      }
+
+      // Após estabelecer a sessão, atualizar a senha
+      const { error: updateError } = await supabase.auth.updateUser({
         password: password
       });
 
-      if (error) {
-        console.error("Erro ao atualizar senha:", error);
-        throw error;
+      if (updateError) {
+        console.error("Erro ao atualizar senha:", updateError);
+        throw updateError;
       }
 
       toast({
         title: "Senha atualizada!",
         description: "Sua senha foi alterada com sucesso.",
       });
-      setIsNewPassword(false);
-      
-      // Redireciona para a página de login após atualizar a senha
+
+      // Limpar a URL e redirecionar para a página inicial
       window.location.href = window.location.origin;
     } catch (error: any) {
       console.error("Erro ao atualizar senha:", error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || "Erro ao atualizar senha",
         variant: "destructive",
       });
     }
@@ -130,7 +127,6 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
     }
   };
 
-  // Check if we're in password reset mode from URL
   useEffect(() => {
     const checkPasswordReset = async () => {
       const searchParams = new URLSearchParams(window.location.search);
@@ -140,7 +136,7 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
       if (searchParams.get('type') === 'recovery' || hashParams.get('access_token')) {
         console.log("Modo de recuperação de senha detectado");
         setIsNewPassword(true);
-        // Previne login automático em modo de recuperação
+        // Limpa qualquer sessão existente
         await supabase.auth.signOut();
       }
 
