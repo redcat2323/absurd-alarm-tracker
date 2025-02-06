@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
@@ -18,11 +18,15 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log("Iniciando processo de recuperação de senha para:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/?reset=true`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao enviar email de recuperação:", error);
+        throw error;
+      }
       
       toast({
         title: "Email enviado!",
@@ -30,6 +34,7 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
       });
       setIsResetPassword(false);
     } catch (error: any) {
+      console.error("Erro capturado:", error);
       toast({
         title: "Erro",
         description: error.message,
@@ -41,11 +46,15 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log("Iniciando atualização de senha");
       const { error } = await supabase.auth.updateUser({
         password: password
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar senha:", error);
+        throw error;
+      }
 
       toast({
         title: "Senha atualizada!",
@@ -53,6 +62,7 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
       });
       setIsNewPassword(false);
     } catch (error: any) {
+      console.error("Erro ao atualizar senha:", error);
       toast({
         title: "Erro",
         description: error.message,
@@ -98,11 +108,31 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
 
   // Check if we're in password reset mode from URL
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    if (searchParams.get('reset') === 'true') {
-      setIsNewPassword(true);
-    }
-  }, []);
+    const checkPasswordReset = async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      
+      // Verifica se estamos em modo de recuperação de senha
+      if (searchParams.get('reset') === 'true' || hashParams.get('type') === 'recovery') {
+        console.log("Modo de recuperação de senha detectado");
+        setIsNewPassword(true);
+      }
+
+      // Verifica se há algum erro na URL
+      const error = hashParams.get('error');
+      const errorDescription = hashParams.get('error_description');
+      if (error) {
+        console.error("Erro detectado na URL:", error, errorDescription);
+        toast({
+          title: "Erro na recuperação de senha",
+          description: errorDescription || "Ocorreu um erro ao processar sua solicitação",
+          variant: "destructive",
+        });
+      }
+    };
+
+    checkPasswordReset();
+  }, [toast]);
 
   if (isNewPassword) {
     return (
@@ -118,6 +148,7 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
               Atualizar Senha
@@ -196,6 +227,7 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={6}
           />
           <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
             {isSignUp ? "Começar Agora" : "Entrar"}
