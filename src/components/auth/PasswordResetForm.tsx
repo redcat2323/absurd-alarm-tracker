@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -14,7 +15,7 @@ export const PasswordResetForm = ({ onBack }: { onBack: () => void }) => {
     try {
       console.log("Iniciando processo de recuperação de senha para:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/?type=recovery`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       
       if (error) {
@@ -66,3 +67,4 @@ export const PasswordResetForm = ({ onBack }: { onBack: () => void }) => {
     </div>
   );
 };
+

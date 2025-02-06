@@ -13,22 +13,10 @@ export const NewPasswordForm = () => {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      console.log("Iniciando atualização de senha");
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const accessToken = hashParams.get('access_token');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (!accessToken) {
-        throw new Error("Token de acesso não encontrado!");
-      }
-
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: hashParams.get('refresh_token') || '',
-      });
-
-      if (sessionError) {
-        console.error("Erro ao estabelecer sessão:", sessionError);
-        throw sessionError;
+      if (!session || sessionError) {
+        throw new Error("Sessão expirada ou inválida. Por favor, solicite um novo link de recuperação de senha.");
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
@@ -36,7 +24,6 @@ export const NewPasswordForm = () => {
       });
 
       if (updateError) {
-        console.error("Erro ao atualizar senha:", updateError);
         throw updateError;
       }
 
@@ -45,12 +32,12 @@ export const NewPasswordForm = () => {
         description: "Sua senha foi alterada com sucesso.",
       });
 
-      window.location.href = window.location.origin;
+      window.location.href = "/";
     } catch (error: any) {
       console.error("Erro ao atualizar senha:", error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao atualizar senha",
+        description: error.message || "Erro ao atualizar senha. Tente novamente.",
         variant: "destructive",
       });
     }
