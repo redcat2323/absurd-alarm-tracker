@@ -13,10 +13,22 @@ export const NewPasswordForm = () => {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const accessToken = hashParams.get('access_token');
       
-      if (!session || sessionError) {
-        throw new Error("Sessão expirada ou inválida. Por favor, solicite um novo link de recuperação de senha.");
+      if (!accessToken) {
+        throw new Error("Link inválido. Por favor, solicite um novo link de recuperação de senha.");
+      }
+
+      // Set session with the access token from URL
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: hashParams.get('refresh_token') || '',
+      });
+
+      if (sessionError) {
+        console.error("Erro ao estabelecer sessão:", sessionError);
+        throw new Error("Link expirado ou inválido. Por favor, solicite um novo link de recuperação de senha.");
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
@@ -29,9 +41,10 @@ export const NewPasswordForm = () => {
 
       toast({
         title: "Senha atualizada!",
-        description: "Sua senha foi alterada com sucesso.",
+        description: "Sua senha foi alterada com sucesso. Você já pode fazer login.",
       });
 
+      // Redirect to home page
       window.location.href = "/";
     } catch (error: any) {
       console.error("Erro ao atualizar senha:", error);

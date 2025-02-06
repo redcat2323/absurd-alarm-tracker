@@ -15,7 +15,7 @@ export const PasswordResetForm = ({ onBack }: { onBack: () => void }) => {
     try {
       console.log("Iniciando processo de recuperação de senha para:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/?type=recovery`,
       });
       
       if (error) {
@@ -67,4 +67,3 @@ export const PasswordResetForm = ({ onBack }: { onBack: () => void }) => {
     </div>
   );
 };
-
