@@ -20,7 +20,7 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
     try {
       console.log("Iniciando processo de recuperação de senha para:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/?type=recovery`,
       });
       
       if (error) {
@@ -110,15 +110,20 @@ export const Auth = ({ onLogin }: { onLogin: (name: string) => void }) => {
   useEffect(() => {
     const checkPasswordReset = async () => {
       const searchParams = new URLSearchParams(window.location.search);
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
       
       // Verifica se estamos em modo de recuperação de senha
-      if (searchParams.get('reset') === 'true' || hashParams.get('type') === 'recovery') {
+      if (searchParams.get('type') === 'recovery') {
         console.log("Modo de recuperação de senha detectado");
         setIsNewPassword(true);
+        // Previne login automático em modo de recuperação
+        const { error: signOutError } = await supabase.auth.signOut();
+        if (signOutError) {
+          console.error("Erro ao fazer logout:", signOutError);
+        }
       }
 
       // Verifica se há algum erro na URL
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const error = hashParams.get('error');
       const errorDescription = hashParams.get('error_description');
       if (error) {
