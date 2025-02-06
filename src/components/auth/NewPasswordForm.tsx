@@ -5,25 +5,45 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const NewPasswordForm = () => {
   const [password, setPassword] = useState("");
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const accessToken = hashParams.get('access_token');
-      
+      // Em dispositivos móveis, alguns navegadores podem ter problemas com o hash
+      // então vamos tentar obter o token de duas maneiras
+      let accessToken;
+      let refreshToken;
+
+      if (isMobile) {
+        // Em mobile, tenta obter os tokens da URL inteira
+        const urlParams = new URLSearchParams(window.location.search);
+        accessToken = urlParams.get('access_token') || undefined;
+        refreshToken = urlParams.get('refresh_token') || undefined;
+      }
+
+      if (!accessToken) {
+        // Se não encontrou na URL ou não é mobile, tenta do hash
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        accessToken = hashParams.get('access_token');
+        refreshToken = hashParams.get('refresh_token') || '';
+      }
+
       if (!accessToken) {
         throw new Error("Link inválido. Por favor, solicite um novo link de recuperação de senha.");
       }
 
-      // Set session with the access token from URL
+      console.log("Tentando atualizar senha com token:", !!accessToken);
+
+      // Set session with the access token
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
-        refresh_token: hashParams.get('refresh_token') || '',
+        refresh_token: refreshToken || '',
       });
 
       if (sessionError) {
