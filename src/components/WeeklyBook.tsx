@@ -67,7 +67,7 @@ export const WeeklyBook = () => {
           </div>
 
           <Button
-            variant="ghost"
+            variant="secondary"
             className="w-full mt-2"
             onClick={() => setIsExpanded(!isExpanded)}
           >
