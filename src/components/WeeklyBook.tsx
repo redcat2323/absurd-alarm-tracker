@@ -32,18 +32,24 @@ export const WeeklyBook = () => {
             <h3 className="text-xl font-semibold text-foreground mb-2">{book.title}</h3>
             <p className="text-muted-foreground text-lg italic mb-4">por {book.author}</p>
             
+            {book.description && (
+              <div className={`relative ${!isExpanded ? "max-h-24 overflow-hidden" : ""}`}>
+                <div 
+                  className="text-foreground leading-relaxed mb-4"
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: book.description }}
+                />
+                {!isExpanded && (
+                  <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card to-transparent" />
+                )}
+              </div>
+            )}
+            
             {isExpanded && (
               <>
-                {book.description && (
-                  <div 
-                    className="text-foreground leading-relaxed mb-4"
-                    style={{
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word'
-                    }}
-                    dangerouslySetInnerHTML={{ __html: book.description }}
-                  />
-                )}
                 {book.pdf_url && <PDFDownloadButton pdfUrl={book.pdf_url} />}
 
                 {upcomingBooks.length > 0 && (
