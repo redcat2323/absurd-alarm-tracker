@@ -1,10 +1,18 @@
+
 import { Card } from "@/components/ui/card";
 import { Book } from "lucide-react";
 import { useWeeklyBook } from "@/hooks/useWeeklyBook";
 import { PDFDownloadButton } from "@/components/PDFDownloadButton";
+import { parseISO, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export const WeeklyBook = () => {
-  const { book } = useWeeklyBook();
+  const { book, upcomingBooks } = useWeeklyBook();
+
+  const formatWeekStart = (dateStr: string) => {
+    const date = parseISO(dateStr);
+    return format(date, "dd 'de' MMMM", { locale: ptBR });
+  };
 
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-secondary/5">
@@ -32,6 +40,23 @@ export const WeeklyBook = () => {
             )}
             {book.pdf_url && <PDFDownloadButton pdfUrl={book.pdf_url} />}
           </div>
+
+          {upcomingBooks.length > 0 && (
+            <div className="mt-8 pt-6 border-t border-border">
+              <h4 className="text-lg font-semibold text-primary mb-4">Próximos Livros</h4>
+              <div className="space-y-4">
+                {upcomingBooks.map((upcomingBook) => (
+                  <div key={upcomingBook.id} className="p-4 rounded-lg bg-secondary/10">
+                    <div className="text-sm text-muted-foreground mb-1">
+                      Semana do dia {formatWeekStart(upcomingBook.week_start)}
+                    </div>
+                    <h5 className="font-medium text-foreground">{upcomingBook.title}</h5>
+                    <p className="text-sm text-muted-foreground">por {upcomingBook.author}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-muted-foreground text-lg">Nenhum livro selecionado para esta semana.</p>
