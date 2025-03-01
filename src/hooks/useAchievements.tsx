@@ -1,11 +1,13 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Achievement, UserAchievement } from "@/types/achievements";
 import { toast } from "@/components/ui/use-toast";
+import { syncAchievementsWithHistory } from "@/utils/achievementSync";
 
 export const useAchievements = (userId: string | undefined) => {
+  const [isSyncing, setIsSyncing] = useState(false);
+  
   // Fetch all available achievements
   const { data: achievements } = useQuery({
     queryKey: ['achievements'],
@@ -155,11 +157,37 @@ export const useAchievements = (userId: string | undefined) => {
     }
   }, [achievements, userId]);
 
+  // Add new function to sync achievements with history
+  const syncAllAchievements = async () => {
+    if (!userId || !achievements || isSyncing) return;
+    
+    try {
+      setIsSyncing(true);
+      await syncAchievementsWithHistory(userId, achievements, unlockAchievement);
+      await refetchUserAchievements();
+      toast({
+        title: "Conquistas Sincronizadas",
+        description: "Todas as conquistas foram atualizadas com base no seu histórico de hábitos.",
+      });
+    } catch (error: any) {
+      console.error("Error syncing achievements:", error);
+      toast({
+        title: "Erro na sincronização",
+        description: "Não foi possível sincronizar todas as conquistas. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return {
     achievements,
     userAchievements,
     unlockAchievement,
     refetchUserAchievements,
     checkForSeasonalAchievements,
+    syncAllAchievements,
+    isSyncing
   };
 };

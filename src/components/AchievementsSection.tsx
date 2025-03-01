@@ -2,13 +2,15 @@
 import { useAchievements } from "@/hooks/useAchievements";
 import { AchievementCard } from "@/components/AchievementCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw } from "lucide-react";
 
 interface AchievementsSectionProps {
   userId: string;
 }
 
 export const AchievementsSection = ({ userId }: AchievementsSectionProps) => {
-  const { achievements, userAchievements } = useAchievements(userId);
+  const { achievements, userAchievements, syncAllAchievements, isSyncing } = useAchievements(userId);
 
   if (!achievements) return null;
 
@@ -20,7 +22,27 @@ export const AchievementsSection = ({ userId }: AchievementsSectionProps) => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Conquistas</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Conquistas</h2>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={syncAllAchievements}
+          disabled={isSyncing}
+        >
+          {isSyncing ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Sincronizando...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Sincronizar Conquistas
+            </>
+          )}
+        </Button>
+      </div>
       
       <Tabs defaultValue="all">
         <TabsList className="grid w-full grid-cols-5">

@@ -22,9 +22,17 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     celebrationMessage,
     celebrate 
   } = useCelebration();
-  const { achievements, unlockAchievement, userAchievements } = useAchievements(userId);
+  const { 
+    achievements, 
+    unlockAchievement, 
+    userAchievements,
+    syncAllAchievements 
+  } = useAchievements(userId);
+  
   // Add a ref to track which achievements we've checked in this session
   const checkedAchievementsRef = useRef<Set<number>>(new Set());
+  // Add a ref to track if we've synced achievements
+  const hasInitialSyncRef = useRef(false);
 
   useEffect(() => {
     checkAndResetHabits(userId);
@@ -35,6 +43,25 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     
     return () => clearInterval(interval);
   }, [userId]);
+
+  // Add a new effect to sync achievements once when component loads
+  useEffect(() => {
+    if (
+      userId && 
+      achievements && 
+      achievements.length > 0 && 
+      !hasInitialSyncRef.current
+    ) {
+      // Only sync once per session
+      hasInitialSyncRef.current = true;
+      // Use a small delay to ensure everything is loaded
+      const timer = setTimeout(() => {
+        syncAllAchievements();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [userId, achievements, syncAllAchievements]);
 
   const checkAchievements = async (habitId: number, isCustom: boolean) => {
     if (!achievements) return;
