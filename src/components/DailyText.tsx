@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,14 +47,38 @@ export const DailyText = () => {
 
   const formattedDate = formatInTimeZone(new Date(), TIMEZONE, "dd 'de' MMMM", { locale: ptBR });
 
+  const extractTextFromHtml = (html: string): string => {
+    // Replace paragraph breaks with double line breaks
+    let processedText = html.replace(/<\/p>\s*<p>/g, '\n\n');
+    
+    // Replace list items with bullet points and line breaks
+    processedText = processedText.replace(/<li>/g, '• ');
+    processedText = processedText.replace(/<\/li>/g, '\n');
+    
+    // Replace other common HTML tags with formatting
+    processedText = processedText.replace(/<br\s*\/?>/g, '\n');
+    processedText = processedText.replace(/<strong>(.*?)<\/strong>/g, '*$1*');
+    processedText = processedText.replace(/<em>(.*?)<\/em>/g, '_$1_');
+    
+    // Remove all remaining HTML tags
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = processedText;
+    
+    // Get text content while preserving line breaks we've added
+    let textContent = tempDiv.textContent || "";
+    
+    // Clean up any excessive line breaks
+    textContent = textContent.replace(/\n{3,}/g, '\n\n');
+    
+    return textContent;
+  };
+
   const handleCopyText = async () => {
     if (!dailyText?.text) return;
     
     try {
-      // Remove HTML tags for plain text copying
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = dailyText.text;
-      const textToCopy = `Boot Diário - ${formattedDate}\n\n${tempDiv.textContent}`;
+      const formattedText = extractTextFromHtml(dailyText.text);
+      const textToCopy = `Boot Diário - ${formattedDate}\n\n${formattedText}`;
       
       await navigator.clipboard.writeText(textToCopy);
       setIsCopied(true);
@@ -82,10 +105,8 @@ export const DailyText = () => {
     if (!dailyText?.text || !navigator.share) return;
     
     try {
-      // Remove HTML tags for plain text sharing
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = dailyText.text;
-      const textToShare = `Boot Diário - ${formattedDate}\n\n${tempDiv.textContent}`;
+      const formattedText = extractTextFromHtml(dailyText.text);
+      const textToShare = `Boot Diário - ${formattedDate}\n\n${formattedText}`;
       
       await navigator.share({
         title: `Boot Diário - ${formattedDate}`,
