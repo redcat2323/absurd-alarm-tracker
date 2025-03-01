@@ -1,8 +1,9 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgressStats } from "./ProgressStats";
 import { ProgressChart } from "./ProgressChart";
-import { format, subDays } from "date-fns";
+import { format, subDays, parseISO } from "date-fns";
 
 interface ProgressDashboardProps {
   userId: string;
@@ -114,12 +115,12 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
 
       // Criar array dos últimos 30 dias
       const last30Days = Array.from({ length: 30 }, (_, i) => {
-        const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
+        const date = format(subDays(new Date(), 29 - i), 'yyyy-MM-dd');
         return {
           date,
           completed: groupedCompletions[date] || 0,
         };
-      }).reverse();
+      });
 
       return last30Days;
     },
