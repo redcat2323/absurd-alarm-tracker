@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, Share2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type DailyText = Database["public"]["Tables"]["daily_texts"]["Row"];
 
@@ -20,6 +21,7 @@ export const DailyText = () => {
   const today = formatInTimeZone(new Date(), TIMEZONE, 'yyyy-MM-dd');
   const { toast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
+  const isMobile = useIsMobile();
   
   const { data: dailyText } = useQuery({
     queryKey: ['dailyText', today],
@@ -140,7 +142,8 @@ export const DailyText = () => {
               {isCopied ? "Copiado!" : "Copiar"}
             </Button>
             
-            {navigator.share && (
+            {/* Only show Share button on mobile devices */}
+            {isMobile && navigator.share && (
               <Button
                 variant="outline"
                 className="flex items-center gap-2"
