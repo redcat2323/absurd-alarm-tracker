@@ -8,25 +8,38 @@ const UsersDashboard = () => {
   const { data: totalUsers, isLoading: loadingTotal } = useQuery({
     queryKey: ["total-users"],
     queryFn: async () => {
-      // Get count of users from auth schema
-      const { count, error } = await supabase.auth.admin.listUsers({
-        page: 1,
-        perPage: 1
-      });
-      
-      if (error) {
-        console.error("Error fetching users:", error);
-        // Fallback to counting users with habit completions
-        const { count: fallbackCount, error: fallbackError } = await supabase
-          .from("habit_daily_completions")
-          .select("user_id", { count: "exact", head: true })
-          .eq("user_id", "user_id");
+      try {
+        // Get count of users from auth schema
+        const { data, error } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000 // Adjust as needed for your user base size
+        });
         
-        if (fallbackError) throw fallbackError;
-        return fallbackCount || 0;
+        if (error) throw error;
+        
+        // The count is available via the users array length
+        return data.users.length || 0;
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        // Fallback to counting distinct user_ids from habit completions
+        const { data: distinctUsers, error: fallbackError } = await supabase
+          .from("habit_daily_completions")
+          .select("user_id", { count: "exact", head: false })
+          .limit(1);
+        
+        if (fallbackError) {
+          console.error("Fallback error:", fallbackError);
+          return 0;
+        }
+        
+        // Count distinct users from habit_daily_completions
+        const { count } = await supabase
+          .from("habit_daily_completions")
+          .select("user_id", { count: "exact" })
+          .is("user_id", null, { negated: true });
+        
+        return count || 0;
       }
-      
-      return count || 0;
     },
   });
 
