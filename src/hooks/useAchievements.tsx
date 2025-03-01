@@ -103,10 +103,62 @@ export const useAchievements = (userId: string | undefined) => {
     }
   };
 
+  // Check for seasonal achievements based on the current date
+  const checkForSeasonalAchievements = async () => {
+    if (!userId || !achievements) return;
+    
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
+    const currentDay = currentDate.getDate();
+    
+    // Filter seasonal achievements
+    const seasonalAchievements = achievements.filter(a => a.type === 'seasonal');
+    
+    for (const achievement of seasonalAchievements) {
+      // Check if the achievement matches the current month (stored in requirement_value)
+      if (achievement.requirement_value === currentMonth) {
+        // For specific days, check the category field which may contain the day
+        const dayRequirement = achievement.category ? parseInt(achievement.category, 10) : null;
+        
+        // If there's a specific day requirement and it doesn't match today, skip
+        if (dayRequirement && dayRequirement !== currentDay) {
+          continue;
+        }
+        
+        // Check if already unlocked this year
+        const { data: existingUnlocks, error: checkError } = await supabase
+          .from('user_achievements')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('achievement_id', achievement.id)
+          .gte('unlocked_at', `${currentDate.getFullYear()}-01-01`)
+          .lte('unlocked_at', `${currentDate.getFullYear()}-12-31`);
+          
+        if (checkError) {
+          console.error('Error checking seasonal achievements:', checkError);
+          continue;
+        }
+        
+        // If not already unlocked this year, unlock it
+        if (!existingUnlocks || existingUnlocks.length === 0) {
+          await unlockAchievement(achievement.id);
+        }
+      }
+    }
+  };
+
+  // Run the seasonal check when the hook is initialized and achievements are loaded
+  useEffect(() => {
+    if (achievements && userId) {
+      checkForSeasonalAchievements();
+    }
+  }, [achievements, userId]);
+
   return {
     achievements,
     userAchievements,
     unlockAchievement,
     refetchUserAchievements,
+    checkForSeasonalAchievements,
   };
 };

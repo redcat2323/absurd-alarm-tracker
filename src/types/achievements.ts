@@ -1,8 +1,9 @@
+
 export interface Achievement {
   id: number;
   title: string;
   description: string;
-  type: 'streak' | 'milestone' | 'category';
+  type: 'streak' | 'milestone' | 'category' | 'seasonal';
   requirement_value: number;
   category: string | null;
   icon: string;
