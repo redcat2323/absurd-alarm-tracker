@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Achievement, UserAchievement } from "@/types/achievements";
@@ -51,6 +52,23 @@ export const useAchievements = (userId: string | undefined) => {
     }
 
     try {
+      // First, check if this achievement was recently unlocked to prevent duplicate notifications
+      const { data: recentAchievement, error: checkError } = await supabase
+        .from('user_achievements')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('achievement_id', achievementId)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
+        throw checkError;
+      }
+
+      // If achievement was already unlocked, just return without showing notification
+      if (recentAchievement) {
+        return;
+      }
+
       const { error } = await supabase
         .from('user_achievements')
         .insert([
@@ -68,6 +86,7 @@ export const useAchievements = (userId: string | undefined) => {
 
       const achievement = achievements?.find(a => a.id === achievementId);
       
+      // Show notification only once for each achievement
       toast({
         title: "🎉 Nova Conquista Desbloqueada!",
         description: achievement?.title,

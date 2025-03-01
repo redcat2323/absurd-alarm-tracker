@@ -1,9 +1,10 @@
+
 import { HabitList } from "@/components/HabitList";
 import { AddHabitForm } from "@/components/AddHabitForm";
 import { useHabits } from "@/hooks/useHabits";
 import { useCelebration } from "@/hooks/useCelebration";
 import { CelebrationMessage } from "@/components/CelebrationMessage";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { checkAndResetHabits } from "@/utils/habitReset";
 import { useAchievements } from "@/hooks/useAchievements";
 
@@ -22,6 +23,8 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     celebrate 
   } = useCelebration();
   const { achievements, unlockAchievement, userAchievements } = useAchievements(userId);
+  // Add a ref to track which achievements we've checked in this session
+  const checkedAchievementsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     checkAndResetHabits(userId);
@@ -48,12 +51,19 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     );
 
     for (const achievement of categoryAchievements) {
+      // Skip if we've already checked this achievement in the current session
+      if (checkedAchievementsRef.current.has(achievement.id)) {
+        continue;
+      }
+      
       // Check if achievement is not already unlocked
       const isUnlocked = userAchievements?.some(
         ua => ua.achievement_id === achievement.id
       );
 
       if (!isUnlocked && habit.completed_days >= achievement.requirement_value) {
+        // Mark as checked in this session
+        checkedAchievementsRef.current.add(achievement.id);
         await unlockAchievement(achievement.id);
         celebrate("achievement", `Conquista desbloqueada: ${achievement.title}`);
       }
@@ -62,12 +72,19 @@ export const HabitsSection = ({ userId }: HabitsSectionProps) => {
     // Check streak achievements
     const streakAchievements = achievements.filter(a => a.type === 'streak');
     for (const achievement of streakAchievements) {
+      // Skip if we've already checked this achievement in the current session
+      if (checkedAchievementsRef.current.has(achievement.id)) {
+        continue;
+      }
+      
       // Check if achievement is not already unlocked
       const isUnlocked = userAchievements?.some(
         ua => ua.achievement_id === achievement.id
       );
 
       if (!isUnlocked && habit.completed_days >= achievement.requirement_value) {
+        // Mark as checked in this session
+        checkedAchievementsRef.current.add(achievement.id);
         await unlockAchievement(achievement.id);
         celebrate("milestone", `Marco alcançado: ${achievement.title}`);
       }
