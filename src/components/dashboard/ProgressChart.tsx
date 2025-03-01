@@ -1,19 +1,20 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, isSameDay, parseISO } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, parseISO } from 'date-fns';
 
 interface ProgressChartProps {
   data: Array<{
     date: string;
     completed: number;
   }>;
+  totalHabits?: number; // Add totalHabits prop with optional type
 }
 
-export const ProgressChart = ({ data }: ProgressChartProps) => {
+export const ProgressChart = ({ data, totalHabits = 6 }: ProgressChartProps) => {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
   
@@ -39,9 +40,15 @@ export const ProgressChart = ({ data }: ProgressChartProps) => {
     return itemDate >= currentWeekStart && itemDate <= currentWeekEnd;
   });
   
-  // Calculate average completion rate for current week
+  // Calculate average completion rate for current week - percentage based
   const weeklyCompletionRate = weeklyData.length > 0
-    ? Math.round(weeklyData.reduce((sum, item) => sum + item.completed, 0) / weeklyData.length)
+    ? Math.round(
+        weeklyData.reduce((sum, item) => {
+          // Calculate percentage for each day: (completed habits / total habits) * 100
+          const dailyPercentage = Math.min((item.completed / totalHabits) * 100, 100);
+          return sum + dailyPercentage;
+        }, 0) / weeklyData.length
+      )
     : 0;
   
   // Function to navigate to previous week

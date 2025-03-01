@@ -11,7 +11,7 @@ interface ProgressDashboardProps {
 
 export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
   // Buscar estatísticas gerais
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['progress-stats', userId],
     queryFn: async () => {
       // Buscar sequência atual
@@ -94,12 +94,13 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
         currentStreak: streak,
         bestStreak: streak, // Por enquanto igual à sequência atual
         completionRate: averageCompletionRate,
+        totalHabits: totalHabits,
       };
     },
   });
 
   // Buscar dados do gráfico (últimos 30 dias)
-  const { data: chartData } = useQuery({
+  const { data: chartData, isLoading: chartLoading } = useQuery({
     queryKey: ['progress-chart', userId],
     queryFn: async () => {
       const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
@@ -142,6 +143,10 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
     },
   });
 
+  if (statsLoading || chartLoading) {
+    return <div>Carregando...</div>;
+  }
+
   if (!stats || !chartData) {
     return <div>Carregando...</div>;
   }
@@ -153,7 +158,10 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
         bestStreak={stats.bestStreak}
         completionRate={stats.completionRate}
       />
-      <ProgressChart data={chartData} />
+      <ProgressChart 
+        data={chartData} 
+        totalHabits={stats.totalHabits}
+      />
     </div>
   );
 };
