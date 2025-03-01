@@ -17,8 +17,24 @@ export const ProgressChart = ({ data }: ProgressChartProps) => {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
   
+  // Get unique dates and their maximum completion count
+  // This ensures we only count each day's actual completions without duplicates
+  const processedData = data.reduce((acc, item) => {
+    const date = item.date;
+    if (!acc[date] || item.completed > acc[date]) {
+      acc[date] = item.completed;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+  
+  // Convert processed data back to array format
+  const uniqueData = Object.keys(processedData).map(date => ({
+    date,
+    completed: processedData[date]
+  }));
+  
   // Filter data for current week
-  const weeklyData = data.filter(item => {
+  const weeklyData = uniqueData.filter(item => {
     const itemDate = parseISO(item.date);
     return itemDate >= currentWeekStart && itemDate <= currentWeekEnd;
   });
@@ -90,7 +106,7 @@ export const ProgressChart = ({ data }: ProgressChartProps) => {
                   dataKey="date" 
                   tickFormatter={(value) => format(parseISO(value), 'EEE dd/MM')}
                 />
-                <YAxis />
+                <YAxis domain={[0, 'dataMax']} />
                 <Tooltip 
                   labelFormatter={(value) => format(parseISO(value), 'eeee, dd/MM/yyyy')}
                   formatter={(value: number) => [`${value} hábitos`, 'Completados']}
