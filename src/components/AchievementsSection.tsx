@@ -20,10 +20,16 @@ export const AchievementsSection = ({ userId }: AchievementsSectionProps) => {
   const categoryAchievements = achievements.filter(a => a.type === 'category');
   const seasonalAchievements = achievements.filter(a => a.type === 'seasonal');
 
+  // Calculate the count of unlocked achievements
+  const unlockedCount = userAchievements?.length || 0;
+  const totalCount = achievements.length;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Conquistas</h2>
+        <h2 className="text-2xl font-bold">
+          Conquistas <span className="text-lg text-muted-foreground ml-2">({unlockedCount}/{totalCount})</span>
+        </h2>
         <Button 
           variant="outline" 
           size="sm" 
