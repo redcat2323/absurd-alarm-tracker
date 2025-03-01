@@ -16,7 +16,7 @@ const UsersDashboard = () => {
         const { count, error } = await supabase
           .from("habit_daily_completions")
           .select("user_id", { count: "exact", head: true })
-          .is("user_id", null, { negated: true });
+          .not("user_id", "is", null);
         
         if (error) throw error;
         
@@ -44,7 +44,7 @@ const UsersDashboard = () => {
           .from("habit_daily_completions")
           .select("user_id", { count: "exact", head: true })
           .gte("created_at", sevenDaysAgo)
-          .is("user_id", null, { negated: true });
+          .not("user_id", "is", null);
         
         if (error) throw error;
         
