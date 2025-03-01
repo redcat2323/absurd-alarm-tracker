@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserCheck } from "lucide-react";
-import { subDays, format } from "date-fns";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { subDays } from "date-fns";
 
 const UsersDashboard = () => {
   // Query for total registered users
@@ -59,104 +58,33 @@ const UsersDashboard = () => {
     },
   });
 
-  // Query for user list with email and last login
-  const { data: usersList, isLoading: loadingUsersList } = useQuery({
-    queryKey: ["users-list"],
-    queryFn: async () => {
-      try {
-        // Usando habit_daily_completions para obter os usuários e sua atividade mais recente
-        const { data, error } = await supabase
-          .from("habit_daily_completions")
-          .select("user_id, created_at")
-          .order("created_at", { ascending: false });
-        
-        if (error) throw error;
-        
-        // Processar os dados para obter a lista de usuários únicos com seu último login
-        const uniqueUsers = new Map();
-        
-        data?.forEach(completion => {
-          if (completion.user_id && !uniqueUsers.has(completion.user_id)) {
-            uniqueUsers.set(completion.user_id, {
-              email: `user_${completion.user_id.substring(0, 8)}@example.com`, // Email simulado baseado no ID
-              lastLogin: completion.created_at
-            });
-          }
-        });
-        
-        // Convertendo o Map para um array
-        return Array.from(uniqueUsers.entries()).map(([id, user]) => ({
-          id,
-          email: user.email,
-          lastLogin: user.lastLogin
-        }));
-      } catch (error) {
-        console.error("Error fetching users list:", error);
-        // Retornar alguns usuários de exemplo para demonstração
-        return Array.from({ length: 10 }, (_, i) => ({
-          id: `user-${i}`,
-          email: `usuario${i + 1}@exemplo.com`,
-          lastLogin: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString()
-        }));
-      }
-    },
-  });
-
-  if (loadingTotalUsers && loadingActiveUsers && loadingUsersList) {
+  if (loadingTotalUsers && loadingActiveUsers) {
     return <div>Carregando...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Usuários Cadastrados
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalUsers}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Usuários Ativos (Últimos 7 dias)
-            </CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{weeklyActiveUsers}</div>
-          </CardContent>
-        </Card>
-      </div>
-
+    <div className="grid gap-4 md:grid-cols-2">
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Usuários</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Total de Usuários Cadastrados
+          </CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Último Login</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usersList?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    {user.lastLogin ? format(new Date(user.lastLogin), 'dd/MM/yyyy HH:mm') : 'N/A'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="text-2xl font-bold">{totalUsers}</div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            Usuários Ativos (Últimos 7 dias)
+          </CardTitle>
+          <UserCheck className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{weeklyActiveUsers}</div>
         </CardContent>
       </Card>
     </div>
