@@ -1,5 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Achievement, UserAchievement } from "@/types/achievements";
 import { toast } from "@/components/ui/use-toast";
