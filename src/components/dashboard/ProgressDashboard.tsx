@@ -47,27 +47,62 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
         return acc;
       }, {} as Record<string, Set<string>>) || {};
 
-      // Calcular sequência atual - MODIFICAÇÃO AQUI
+      // Calcular sequência atual (corrigido para considerar apenas dias com 100% de completude)
       let currentStreak = 0;
-      let checkDate = today;
-      let dateToCheck;
       
-      // Continuar verificando dias consecutivos
-      do {
-        dateToCheck = checkDate;
-        const completionsOnDay = completionsByDate[dateToCheck]?.size || 0;
+      // Verificar primeiro se o dia atual tem 100% de completude
+      const todayCompletions = completionsByDate[today]?.size || 0;
+      const todayAllCompleted = todayCompletions >= totalHabits;
+      
+      if (todayAllCompleted) {
+        // Se hoje todos os hábitos foram completados, começar contando a partir de hoje
+        currentStreak = 1;
         
-        // Verificar se TODOS os hábitos foram completados neste dia
-        // Se o número de completions for igual ao número total de hábitos, então todos foram completados
-        if (completionsOnDay >= totalHabits) {
-          currentStreak++;
-          // Mover para o dia anterior
-          checkDate = format(subDays(new Date(checkDate), 1), 'yyyy-MM-dd');
-        } else {
-          // Se não completou todos os hábitos para este dia, a sequência termina
-          break;
+        // Verificar dias anteriores consecutivos
+        let previousDate = format(subDays(new Date(today), 1), 'yyyy-MM-dd');
+        
+        while (true) {
+          const completionsOnDay = completionsByDate[previousDate]?.size || 0;
+          
+          // Verificar se TODOS os hábitos foram completados neste dia
+          if (completionsOnDay >= totalHabits) {
+            currentStreak++;
+            // Mover para o dia anterior
+            previousDate = format(subDays(new Date(previousDate), 1), 'yyyy-MM-dd');
+          } else {
+            // Se não completou todos os hábitos, a sequência termina
+            break;
+          }
         }
-      } while (true);
+      } else {
+        // Se hoje não completou todos os hábitos, verificar se ontem completou
+        const yesterdayDate = format(subDays(new Date(today), 1), 'yyyy-MM-dd');
+        const yesterdayCompletions = completionsByDate[yesterdayDate]?.size || 0;
+        const yesterdayAllCompleted = yesterdayCompletions >= totalHabits;
+        
+        if (yesterdayAllCompleted) {
+          // Começar a contar a partir de ontem
+          currentStreak = 1;
+          
+          // Verificar dias anteriores consecutivos
+          let previousDate = format(subDays(new Date(yesterdayDate), 1), 'yyyy-MM-dd');
+          
+          while (true) {
+            const completionsOnDay = completionsByDate[previousDate]?.size || 0;
+            
+            // Verificar se TODOS os hábitos foram completados neste dia
+            if (completionsOnDay >= totalHabits) {
+              currentStreak++;
+              // Mover para o dia anterior
+              previousDate = format(subDays(new Date(previousDate), 1), 'yyyy-MM-dd');
+            } else {
+              // Se não completou todos os hábitos, a sequência termina
+              break;
+            }
+          }
+        }
+        // Se nem hoje nem ontem completou todos os hábitos, a sequência é 0
+      }
 
       // Calcular melhor sequência (histórico) - MODIFICAÇÃO AQUI TAMBÉM
       let bestStreak = 0;
@@ -207,3 +242,4 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
     </div>
   );
 };
+
