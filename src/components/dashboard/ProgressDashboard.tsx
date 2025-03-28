@@ -28,6 +28,15 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
         .eq('user_id', userId)
         .order('completion_date', { ascending: false });
 
+      // Buscar total de hábitos (padrão + customizados) atuais
+      const { data: customHabits } = await supabase
+        .from('custom_habits')
+        .select('id')
+        .eq('user_id', userId);
+      
+      const totalDefaultHabits = 5; // Número fixo de hábitos padrão
+      const totalHabits = (customHabits?.length || 0) + totalDefaultHabits;
+
       // Agrupar completions por data
       const completionsByDate = completions?.reduce((acc, curr) => {
         const date = curr.completion_date;
@@ -38,26 +47,29 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
         return acc;
       }, {} as Record<string, Set<string>>) || {};
 
-      // Calcular sequência atual
+      // Calcular sequência atual - MODIFICAÇÃO AQUI
       let currentStreak = 0;
       let checkDate = today;
       let dateToCheck;
       
-      // Continuar verificando dias consecutivos enquanto encontrarmos completions
+      // Continuar verificando dias consecutivos
       do {
         dateToCheck = checkDate;
-        // Se há pelo menos uma completion neste dia, incrementar a sequência
-        if (completionsByDate[dateToCheck] && completionsByDate[dateToCheck].size > 0) {
+        const completionsOnDay = completionsByDate[dateToCheck]?.size || 0;
+        
+        // Verificar se TODOS os hábitos foram completados neste dia
+        // Se o número de completions for igual ao número total de hábitos, então todos foram completados
+        if (completionsOnDay >= totalHabits) {
           currentStreak++;
           // Mover para o dia anterior
           checkDate = format(subDays(new Date(checkDate), 1), 'yyyy-MM-dd');
         } else {
-          // Se não há completions para este dia, a sequência termina
+          // Se não completou todos os hábitos para este dia, a sequência termina
           break;
         }
       } while (true);
 
-      // Calcular melhor sequência (histórico)
+      // Calcular melhor sequência (histórico) - MODIFICAÇÃO AQUI TAMBÉM
       let bestStreak = 0;
       let currentBestStreak = 0;
       
@@ -66,9 +78,12 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
       
       for (let i = 0; i < sortedDates.length; i++) {
         const currentDate = sortedDates[i];
-        const hasCompletions = completionsByDate[currentDate].size > 0;
+        const completionsOnDay = completionsByDate[currentDate]?.size || 0;
         
-        if (hasCompletions) {
+        // Verificar se TODOS os hábitos foram completados neste dia
+        const allHabitsCompleted = completionsOnDay >= totalHabits;
+        
+        if (allHabitsCompleted) {
           // Se é o primeiro dia ou é consecutivo ao anterior
           if (i === 0 || isConsecutiveDay(sortedDates[i-1], currentDate)) {
             currentBestStreak++;
@@ -81,6 +96,9 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
           if (currentBestStreak > bestStreak) {
             bestStreak = currentBestStreak;
           }
+        } else {
+          // Se não completou todos os hábitos, reiniciar a contagem
+          currentBestStreak = 0;
         }
       }
 
@@ -93,16 +111,6 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
       }
 
       // Calcular taxa média de conclusão diária (últimos 30 dias)
-      // Buscar total de hábitos (padrão + customizados) atuais
-      const { data: customHabits } = await supabase
-        .from('custom_habits')
-        .select('id')
-        .eq('user_id', userId);
-      
-      const totalDefaultHabits = 5; // Número fixo de hábitos padrão
-      const totalHabits = (customHabits?.length || 0) + totalDefaultHabits;
-      
-      // Calcular taxa média de conclusão diária
       let totalCompletionRate = 0;
       let daysWithCompletions = 0;
 
