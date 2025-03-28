@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProgressStats } from "./ProgressStats";
 import { ProgressChart } from "./ProgressChart";
-import { format, subDays, parseISO } from "date-fns";
+import { format, subDays, parseISO, addDays, isEqual } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
 interface ProgressDashboardProps {
   userId: string;
@@ -14,32 +15,84 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['progress-stats', userId],
     queryFn: async () => {
-      // Buscar sequência atual
-      const { data: currentStreak } = await supabase
+      // Timezone para Brasil (São Paulo)
+      const timeZone = "America/Sao_Paulo";
+      
+      // Data atual no formato correto
+      const today = format(toZonedTime(new Date(), timeZone), 'yyyy-MM-dd');
+      
+      // Buscar completions organizadas por data
+      const { data: completions } = await supabase
         .from('habit_daily_completions')
-        .select('completion_date')
+        .select('completion_date, habit_id, is_custom_habit')
         .eq('user_id', userId)
         .order('completion_date', { ascending: false });
 
+      // Agrupar completions por data
+      const completionsByDate = completions?.reduce((acc, curr) => {
+        const date = curr.completion_date;
+        if (!acc[date]) {
+          acc[date] = new Set();
+        }
+        acc[date].add(`${curr.habit_id}-${curr.is_custom_habit}`);
+        return acc;
+      }, {} as Record<string, Set<string>>) || {};
+
       // Calcular sequência atual
-      let streak = 0;
-      if (currentStreak && currentStreak.length > 0) {
-        const today = new Date();
-        let currentDate = today;
-        for (const completion of currentStreak) {
-          const completionDate = new Date(completion.completion_date);
-          if (format(completionDate, 'yyyy-MM-dd') === format(currentDate, 'yyyy-MM-dd')) {
-            streak++;
-            currentDate = subDays(currentDate, 1);
+      let currentStreak = 0;
+      let checkDate = today;
+      let dateToCheck;
+      
+      // Continuar verificando dias consecutivos enquanto encontrarmos completions
+      do {
+        dateToCheck = checkDate;
+        // Se há pelo menos uma completion neste dia, incrementar a sequência
+        if (completionsByDate[dateToCheck] && completionsByDate[dateToCheck].size > 0) {
+          currentStreak++;
+          // Mover para o dia anterior
+          checkDate = format(subDays(new Date(checkDate), 1), 'yyyy-MM-dd');
+        } else {
+          // Se não há completions para este dia, a sequência termina
+          break;
+        }
+      } while (true);
+
+      // Calcular melhor sequência (histórico)
+      let bestStreak = 0;
+      let currentBestStreak = 0;
+      
+      // Ordene as datas das completions
+      const sortedDates = Object.keys(completionsByDate).sort();
+      
+      for (let i = 0; i < sortedDates.length; i++) {
+        const currentDate = sortedDates[i];
+        const hasCompletions = completionsByDate[currentDate].size > 0;
+        
+        if (hasCompletions) {
+          // Se é o primeiro dia ou é consecutivo ao anterior
+          if (i === 0 || isConsecutiveDay(sortedDates[i-1], currentDate)) {
+            currentBestStreak++;
           } else {
-            break;
+            // Reiniciar contagem
+            currentBestStreak = 1;
+          }
+          
+          // Atualizar melhor sequência se a atual for maior
+          if (currentBestStreak > bestStreak) {
+            bestStreak = currentBestStreak;
           }
         }
       }
 
-      // Calcular taxa de conclusão (últimos 30 dias)
-      const thirtyDaysAgo = format(subDays(new Date(), 30), 'yyyy-MM-dd');
-      
+      // Função para verificar se duas datas são consecutivas
+      function isConsecutiveDay(date1: string, date2: string): boolean {
+        const d1 = new Date(date1);
+        const d2 = new Date(date2);
+        const nextDay = addDays(d2, 1);
+        return format(d1, 'yyyy-MM-dd') === format(nextDay, 'yyyy-MM-dd');
+      }
+
+      // Calcular taxa média de conclusão diária (últimos 30 dias)
       // Buscar total de hábitos (padrão + customizados) atuais
       const { data: customHabits } = await supabase
         .from('custom_habits')
@@ -49,25 +102,6 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
       const totalDefaultHabits = 5; // Número fixo de hábitos padrão
       const totalHabits = (customHabits?.length || 0) + totalDefaultHabits;
       
-      // Buscar completions dos últimos 30 dias
-      const { data: completions } = await supabase
-        .from('habit_daily_completions')
-        .select('completion_date, habit_id, is_custom_habit')
-        .eq('user_id', userId)
-        .gte('completion_date', thirtyDaysAgo)
-        .order('completion_date', { ascending: false });
-
-      // Agrupar completions por data
-      const completionsByDate = completions?.reduce((acc, curr) => {
-        const date = format(new Date(curr.completion_date), 'yyyy-MM-dd');
-        if (!acc[date]) {
-          acc[date] = new Set();
-        }
-        // Use a unique identifier combining habit_id and is_custom_habit
-        acc[date].add(`${curr.habit_id}-${curr.is_custom_habit}`);
-        return acc;
-      }, {} as Record<string, Set<string>>) || {};
-
       // Calcular taxa média de conclusão diária
       let totalCompletionRate = 0;
       let daysWithCompletions = 0;
@@ -91,10 +125,10 @@ export const ProgressDashboard = ({ userId }: ProgressDashboardProps) => {
         : 0;
 
       return {
-        currentStreak: streak,
-        bestStreak: streak, // Por enquanto igual à sequência atual
+        currentStreak,
+        bestStreak: Math.max(bestStreak, currentStreak), // Garante que o melhor seja pelo menos o atual
         completionRate: averageCompletionRate,
-        totalHabits: totalHabits,
+        totalHabits,
       };
     },
   });
