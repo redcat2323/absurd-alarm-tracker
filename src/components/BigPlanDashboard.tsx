@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, TrendingUp, Building, Crown, Zap, Users, Compass, MessageSquare } from 'lucide-react';
 import { PillarGoalsModal } from './bigplan/PillarGoalsModal';
 import { QuarterlyReflectionModal } from './bigplan/QuarterlyReflectionModal';
+import { LoadSampleGoals } from './bigplan/LoadSampleGoals';
 
 interface BigPlanDashboardProps {
   userId: string;
@@ -146,6 +146,11 @@ export const BigPlanDashboard = ({ userId }: BigPlanDashboardProps) => {
 
   return (
     <div className="space-y-8">
+      {/* Carregar Metas de Exemplo - só aparece se não há metas ainda */}
+      {annualGoals?.length === 0 && (
+        <LoadSampleGoals userId={userId} />
+      )}
+
       {/* Progresso Geral */}
       <Card>
         <CardHeader>
