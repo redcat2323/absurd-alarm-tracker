@@ -42,12 +42,97 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliates: {
+        Row: {
+          audience_size: number | null
+          category: string | null
+          commission_rate: number | null
+          commission_rate_boleto: number | null
+          commission_rate_pix: number | null
+          created_at: string
+          email: string | null
+          id: string
+          last_contact: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          social_media: string | null
+          stage: string
+          website: string | null
+        }
+        Insert: {
+          audience_size?: number | null
+          category?: string | null
+          commission_rate?: number | null
+          commission_rate_boleto?: number | null
+          commission_rate_pix?: number | null
+          created_at?: string
+          email?: string | null
+          id: string
+          last_contact?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          social_media?: string | null
+          stage: string
+          website?: string | null
+        }
+        Update: {
+          audience_size?: number | null
+          category?: string | null
+          commission_rate?: number | null
+          commission_rate_boleto?: number | null
+          commission_rate_pix?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_contact?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          social_media?: string | null
+          stage?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      big_plan_pillars: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          icon: string
+          id: number
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: number
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: number
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       custom_habits: {
         Row: {
           completed: boolean | null
           completed_days: number | null
           created_at: string
           id: number
+          pillar_ids: number[] | null
           progress: number | null
           title: string
           updated_at: string | null
@@ -58,6 +143,7 @@ export type Database = {
           completed_days?: number | null
           created_at?: string
           id?: number
+          pillar_ids?: number[] | null
           progress?: number | null
           title: string
           updated_at?: string | null
@@ -68,6 +154,7 @@ export type Database = {
           completed_days?: number | null
           created_at?: string
           id?: number
+          pillar_ids?: number[] | null
           progress?: number | null
           title?: string
           updated_at?: string | null
@@ -129,6 +216,38 @@ export type Database = {
         }
         Relationships: []
       }
+      default_habit_pillars: {
+        Row: {
+          created_at: string
+          habit_id: number
+          id: number
+          pillar_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          habit_id: number
+          id?: number
+          pillar_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          habit_id?: number
+          id?: number
+          pillar_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "default_habit_pillars_pillar_id_fkey"
+            columns: ["pillar_id"]
+            isOneToOne: false
+            referencedRelation: "big_plan_pillars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habit_daily_completions: {
         Row: {
           completion_date: string
@@ -152,6 +271,205 @@ export type Database = {
           habit_id?: number
           id?: number
           is_custom_habit?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          category: string | null
+          company_name: string | null
+          contact_name: string | null
+          created_at: string
+          domain: string
+          email: string | null
+          id: string
+          last_contact: string | null
+          notes: string | null
+          phone: string | null
+          stage: string
+          value: number | null
+        }
+        Insert: {
+          category?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          domain: string
+          email?: string | null
+          id: string
+          last_contact?: string | null
+          notes?: string | null
+          phone?: string | null
+          stage: string
+          value?: number | null
+        }
+        Update: {
+          category?: string | null
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          domain?: string
+          email?: string | null
+          id?: string
+          last_contact?: string | null
+          notes?: string | null
+          phone?: string | null
+          stage?: string
+          value?: number | null
+        }
+        Relationships: []
+      }
+      pillar_annual_goals: {
+        Row: {
+          created_at: string
+          current_value: number | null
+          description: string | null
+          id: number
+          notes: string | null
+          pillar_id: number
+          progress_percentage: number | null
+          target_value: number | null
+          title: string
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: number
+          notes?: string | null
+          pillar_id: number
+          progress_percentage?: number | null
+          target_value?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: number
+          notes?: string | null
+          pillar_id?: number
+          progress_percentage?: number | null
+          target_value?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pillar_annual_goals_pillar_id_fkey"
+            columns: ["pillar_id"]
+            isOneToOne: false
+            referencedRelation: "big_plan_pillars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pillar_quarterly_goals: {
+        Row: {
+          created_at: string
+          current_value: number | null
+          description: string | null
+          id: number
+          notes: string | null
+          pillar_id: number
+          progress_percentage: number | null
+          quarter: number
+          reflections: string | null
+          target_value: number | null
+          title: string
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: number
+          notes?: string | null
+          pillar_id: number
+          progress_percentage?: number | null
+          quarter: number
+          reflections?: string | null
+          target_value?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          current_value?: number | null
+          description?: string | null
+          id?: number
+          notes?: string | null
+          pillar_id?: number
+          progress_percentage?: number | null
+          quarter?: number
+          reflections?: string | null
+          target_value?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pillar_quarterly_goals_pillar_id_fkey"
+            columns: ["pillar_id"]
+            isOneToOne: false
+            referencedRelation: "big_plan_pillars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      thirteen_week_cycles: {
+        Row: {
+          created_at: string
+          cycle_number: number
+          description: string | null
+          end_date: string
+          final_reflection: string | null
+          id: number
+          main_focus: string
+          start_date: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_number: number
+          description?: string | null
+          end_date: string
+          final_reflection?: string | null
+          id?: number
+          main_focus: string
+          start_date: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cycle_number?: number
+          description?: string | null
+          end_date?: string
+          final_reflection?: string | null
+          id?: number
+          main_focus?: string
+          start_date?: string
+          status?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -231,27 +549,29 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -259,20 +579,22 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -280,20 +602,22 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -301,21 +625,23 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -324,6 +650,12 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const

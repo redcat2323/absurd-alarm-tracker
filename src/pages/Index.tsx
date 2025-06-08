@@ -1,31 +1,23 @@
+
 import { useState, useEffect } from "react";
 import { Auth } from "@/components/Auth";
 import { DailyText } from "@/components/DailyText";
 import { WeeklyBook } from "@/components/WeeklyBook";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
+import { BigPlanHeader } from "@/components/BigPlanHeader";
 import { HabitsSection } from "@/components/HabitsSection";
 import { AchievementsSection } from "@/components/AchievementsSection";
 import { ProgressDashboard } from "@/components/dashboard/ProgressDashboard";
+import { BigPlanDashboard } from "@/components/BigPlanDashboard";
+import { WeeklyHabitScore } from "@/components/WeeklyHabitScore";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState("");
   const [userId, setUserId] = useState<string>();
-  const [dayOfYear, setDayOfYear] = useState(0);
 
   useEffect(() => {
-    const calculateDayOfYear = () => {
-      const now = new Date();
-      const start = new Date(now.getFullYear(), 0, 0);
-      const diff = now.getTime() - start.getTime();
-      const oneDay = 1000 * 60 * 60 * 24;
-      const day = Math.floor(diff / oneDay);
-      setDayOfYear(day);
-    };
-
-    calculateDayOfYear();
-    
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -57,30 +49,55 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <Header userName={userName} dayOfYear={dayOfYear} />
+      <div className="max-w-7xl mx-auto space-y-8">
+        <BigPlanHeader userName={userName} />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {userId && (
-            <HabitsSection userId={userId} />
-          )}
-          
-          <div className="space-y-8">
-            <DailyText />
-            <WeeklyBook />
-          </div>
-        </div>
+        <Tabs defaultValue="bigplan" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="bigplan">Big Plan</TabsTrigger>
+            <TabsTrigger value="habits">Hábitos Diários</TabsTrigger>
+            <TabsTrigger value="progress">Progresso</TabsTrigger>
+            <TabsTrigger value="resources">Recursos</TabsTrigger>
+          </TabsList>
 
-        {userId && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-primary mb-6">Seu Progresso</h2>
-            <ProgressDashboard userId={userId} />
-          </div>
-        )}
+          <TabsContent value="bigplan" className="space-y-8">
+            {userId && (
+              <>
+                <BigPlanDashboard userId={userId} />
+                <WeeklyHabitScore userId={userId} />
+              </>
+            )}
+          </TabsContent>
 
-        {userId && (
-          <AchievementsSection userId={userId} />
-        )}
+          <TabsContent value="habits" className="space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {userId && (
+                <HabitsSection userId={userId} />
+              )}
+              
+              <div className="space-y-8">
+                <DailyText />
+                <WeeklyBook />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="progress" className="space-y-8">
+            {userId && (
+              <>
+                <ProgressDashboard userId={userId} />
+                <AchievementsSection userId={userId} />
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="resources" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <DailyText />
+              <WeeklyBook />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
