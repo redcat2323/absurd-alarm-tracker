@@ -126,6 +126,42 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_schedule: {
+        Row: {
+          carousels: number | null
+          created_at: string
+          focus_theme: string | null
+          id: string
+          lives: number | null
+          reels: number | null
+          stories_daily: boolean | null
+          week_number: number
+          youtube_videos: number | null
+        }
+        Insert: {
+          carousels?: number | null
+          created_at?: string
+          focus_theme?: string | null
+          id?: string
+          lives?: number | null
+          reels?: number | null
+          stories_daily?: boolean | null
+          week_number: number
+          youtube_videos?: number | null
+        }
+        Update: {
+          carousels?: number | null
+          created_at?: string
+          focus_theme?: string | null
+          id?: string
+          lives?: number | null
+          reels?: number | null
+          stories_daily?: boolean | null
+          week_number?: number
+          youtube_videos?: number | null
+        }
+        Relationships: []
+      }
       custom_habits: {
         Row: {
           completed: boolean | null
@@ -158,6 +194,93 @@ export type Database = {
           progress?: number | null
           title?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_goal_completions: {
+        Row: {
+          audience_completed: boolean | null
+          authority_completed: boolean | null
+          completion_timestamp: string | null
+          created_at: string
+          goal_date: string
+          id: string
+          offer_completed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience_completed?: boolean | null
+          authority_completed?: boolean | null
+          completion_timestamp?: string | null
+          created_at?: string
+          goal_date: string
+          id?: string
+          offer_completed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience_completed?: boolean | null
+          authority_completed?: boolean | null
+          completion_timestamp?: string | null
+          created_at?: string
+          goal_date?: string
+          id?: string
+          offer_completed?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_goals: {
+        Row: {
+          audience_description: string | null
+          audience_reference: string | null
+          audience_task: string
+          authority_description: string | null
+          authority_reference: string | null
+          authority_task: string
+          created_at: string
+          goal_date: string
+          id: string
+          offer_description: string | null
+          offer_reference: string | null
+          offer_task: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience_description?: string | null
+          audience_reference?: string | null
+          audience_task: string
+          authority_description?: string | null
+          authority_reference?: string | null
+          authority_task: string
+          created_at?: string
+          goal_date: string
+          id?: string
+          offer_description?: string | null
+          offer_reference?: string | null
+          offer_task: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience_description?: string | null
+          audience_reference?: string | null
+          audience_task?: string
+          authority_description?: string | null
+          authority_reference?: string | null
+          authority_task?: string
+          created_at?: string
+          goal_date?: string
+          id?: string
+          offer_description?: string | null
+          offer_reference?: string | null
+          offer_task?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
